@@ -2,7 +2,11 @@
   "mcpServers": {
     "context7": {
       "command": "npx",
-      "args": ["@upstash/context7-mcp@latest", "--transport", "stdio"]
+      "args": [
+        "@upstash/context7-mcp@latest",
+        "--transport",
+        "stdio"
+      ]
     },
     "mempalace": {
       "command": "ssh",
@@ -21,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .claude/hooks/secrets_guard.py",
+            "command": "python3 /Users/artemsidnev/Documents/Projects/ai_office/.claude/hooks/secrets_guard.py",
             "timeout": 5
           }
         ]
@@ -31,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .claude/hooks/high_risk_guard.py",
+            "command": "python3 /Users/artemsidnev/Documents/Projects/ai_office/.claude/hooks/high_risk_guard.py",
             "timeout": 5
           }
         ]
@@ -42,7 +46,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .claude/hooks/session_report.py",
+            "command": "python3 /Users/artemsidnev/Documents/Projects/ai_office/.claude/hooks/session_report.py",
             "timeout": 5
           }
         ]
