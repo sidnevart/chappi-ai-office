@@ -1,0 +1,42 @@
+# Секреты — никогда не коммитить
+.env
+.env.*
+*.env
+OAuth*.json
+
+# Временные файлы Claude Code
+.claude/session_log.jsonl
+gentle-skipping-ullman.md
+
+# Docusaurus
+docs-site/node_modules/
+docs-site/.docusaurus/
+docs-site/build/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.venv/
+venv/
+.venv/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Логи
+*.log
+/tmp/
+
+# Codex (локальная конфигурация, не для публикации)
+.codex/

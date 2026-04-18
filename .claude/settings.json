@@ -1,0 +1,52 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["@upstash/context7-mcp@latest", "--transport", "stdio"]
+    },
+    "mempalace": {
+      "command": "ssh",
+      "args": [
+        "root@80.74.25.43",
+        "/opt/ai-office/mempalace-venv/bin/python",
+        "-m",
+        "mempalace.mcp_server"
+      ]
+    }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/secrets_guard.py",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/high_risk_guard.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/session_report.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
