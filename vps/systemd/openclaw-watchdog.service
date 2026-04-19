@@ -1,0 +1,7 @@
+[Unit]
+Description=OpenClaw watchdog health check
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/openclaw-watchdog.sh

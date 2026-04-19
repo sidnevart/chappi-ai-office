@@ -102,6 +102,9 @@ mkdir -p /opt/ai-office/voice /opt/ai-office/notify
 cp "$REPO_DIR/vps/voice/transcribe.py" /opt/ai-office/voice/
 cp "$REPO_DIR/vps/notify/notify.py"    /opt/ai-office/notify/
 chmod +x /opt/ai-office/voice/transcribe.py /opt/ai-office/notify/notify.py
+install -m 0755 "$REPO_DIR/vps/scripts/openclaw-preflight.sh" /usr/local/sbin/openclaw-preflight.sh
+install -m 0755 "$REPO_DIR/vps/scripts/openclaw-watchdog.sh" /usr/local/sbin/openclaw-watchdog.sh
+install -m 0755 "$REPO_DIR/vps/scripts/ai-office-postgres-firewall.sh" /usr/local/sbin/ai-office-postgres-firewall.sh
 
 # ── Документация Docusaurus ───────────────────────────────────────────────────
 echo ""
@@ -139,12 +142,15 @@ echo "🧠 MemPalace..."
 echo ""
 echo "⚙️  Systemd службы..."
 SYSTEMD_SRC="$REPO_DIR/vps/systemd"
-for svc in openclaw ai-office-ui ai-office-docs ai-office-new-ui litellm; do
+for svc in openclaw openclaw-watchdog ai-office-postgres-firewall ai-office-ui ai-office-docs ai-office-new-ui litellm; do
   src_file="$SYSTEMD_SRC/${svc}.service"
   if [ -f "$src_file" ]; then
     cp "$src_file" /etc/systemd/system/
   fi
 done
+if [ -f "$SYSTEMD_SRC/openclaw-watchdog.timer" ]; then
+  cp "$SYSTEMD_SRC/openclaw-watchdog.timer" /etc/systemd/system/
+fi
 systemctl daemon-reload
 
 for svc in openclaw ai-office-ui ai-office-docs ai-office-new-ui; do
@@ -152,6 +158,12 @@ for svc in openclaw ai-office-ui ai-office-docs ai-office-new-ui; do
     && echo "   ✅ $svc" \
     || echo "   ⚠️  $svc: проверь journalctl -u $svc"
 done
+systemctl enable --now openclaw-watchdog.timer 2>/dev/null \
+  && echo "   ✅ openclaw-watchdog.timer" \
+  || echo "   ⚠️  openclaw-watchdog.timer: проверь journalctl -u openclaw-watchdog"
+systemctl enable --now ai-office-postgres-firewall.service 2>/dev/null \
+  && echo "   ✅ ai-office-postgres-firewall.service" \
+  || echo "   ⚠️  ai-office-postgres-firewall.service: проверь journalctl -u ai-office-postgres-firewall"
 
 # ── Firewall ──────────────────────────────────────────────────────────────────
 echo ""
