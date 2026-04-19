@@ -5,7 +5,7 @@ After=network.target openclaw.service
 [Service]
 Type=simple
 ExecStart=/usr/bin/openclaw-office --port 3001
-Restart=on-failure
+Restart=always
 RestartSec=5
 Environment=OPENCLAW_GATEWAY_URL=wss://80.74.25.43/gateway-ws
 StandardOutput=journal
