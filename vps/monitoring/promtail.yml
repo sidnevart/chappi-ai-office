@@ -14,8 +14,30 @@ scrape_configs:
       max_age: 12h
       labels:
         job: journald
+    pipeline_stages:
+      # Extract level from openclaw JSON log lines
+      - match:
+          selector: '{job="journald"}'
+          stages:
+            - json:
+                expressions:
+                  _level: '_meta.logLevelName'
+                  _unit: ''
+            - template:
+                source: level
+                template: '{{ if ._level }}{{ toLower ._level }}{{ else }}info{{ end }}'
+            - labels:
+                level:
+      # Fallback: detect level from plain text
+      - match:
+          selector: '{job="journald", level=""}'
+          stages:
+            - regex:
+                expression: '(?i)(level|lvl)=(?P<level>error|warn|info|debug)'
+            - labels:
+                level:
     relabel_configs:
       - source_labels: ['__journal__systemd_unit']
         target_label: unit
       - source_labels: ['__journal_priority_keyword']
-        target_label: level
+        target_label: priority
