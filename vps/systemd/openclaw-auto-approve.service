@@ -1,0 +1,10 @@
+[Unit]
+Description=OpenClaw auto-approve pending device pairing requests
+After=openclaw.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/root/.env
+ExecStart=/usr/local/sbin/openclaw-auto-approve.sh
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run openclaw-auto-approve every 30 seconds
+
+[Timer]
+OnBootSec=60
+OnUnitActiveSec=30s
+Unit=openclaw-auto-approve.service
+
+[Install]
+WantedBy=timers.target
