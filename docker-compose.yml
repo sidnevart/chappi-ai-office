@@ -68,7 +68,7 @@ services:
       - monitoring
 
   promtail:
-    image: grafana/promtail:latest
+    image: grafana/promtail:2.9.10
     container_name: ai-office-promtail
     restart: unless-stopped
     volumes:
