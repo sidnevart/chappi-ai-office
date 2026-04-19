@@ -54,4 +54,52 @@ claude
 
 ## MCP-серверы
 
-Настройки MCP-серверов находятся в `.claude/settings.json`. По умолчанию нет дополнительных серверов — всё работает через стандартные инструменты Claude Code.
+Настройки в `.claude/settings.json`. По умолчанию подключён MemPalace (семантический поиск) через SSH на VPS.
+
+---
+
+## Использование Ollama-моделей с VPS (экономия токенов)
+
+По умолчанию Claude Code использует Anthropic API. Можно переключиться на модели Ollama на VPS.
+
+### Алиасы в ~/.zshrc
+
+```bash
+# Claude Code → Ollama на VPS (через litellm прокси)
+alias cc-local='ANTHROPIC_BASE_URL=http://YOUR_VPS_IP:8082 ANTHROPIC_API_KEY=ollama claude'
+alias cc-cloud='unset ANTHROPIC_BASE_URL ANTHROPIC_API_KEY && claude'
+
+# Codex → Ollama напрямую (через SSH-туннель)
+alias cx-light='OPENAI_BASE_URL=http://localhost:11434/v1 OPENAI_API_KEY=ollama codex -m qwen3:8b'
+alias cx-medium='OPENAI_BASE_URL=http://localhost:11434/v1 OPENAI_API_KEY=ollama codex -m glm-5:cloud'
+```
+
+Использование:
+```bash
+cc-local   # Claude Code → qwen3/glm-5 через VPS
+cc-cloud   # Claude Code → стандартный Anthropic API
+cx-light   # Codex → qwen3:8b (лёгкие задачи)
+```
+
+### Что нужно на VPS
+
+**litellm** — прокси, переводящий формат Anthropic → OpenAI (для Ollama):
+
+```bash
+# Уже настроен как systemd-служба: ai-office/vps/systemd/litellm.service
+systemctl status litellm   # проверить
+systemctl start litellm    # запустить если не работает
+```
+
+Слушает на порту 8082.
+
+### SSH-туннель для Codex (Ollama на порту 11434)
+
+LaunchAgent уже создан: `~/Library/LaunchAgents/ai.aioffice.ollama-tunnel.plist`
+
+Активировать:
+```bash
+launchctl load ~/Library/LaunchAgents/ai.aioffice.ollama-tunnel.plist
+```
+
+После этого `localhost:11434` → Ollama на VPS.
