@@ -1,0 +1,21 @@
+[Unit]
+Description=OpenClaw AI Office Gateway
+After=network.target ollama.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/openclaw gateway --port 18789
+Restart=on-failure
+RestartSec=10
+WorkingDirectory=/root
+EnvironmentFile=/root/.env
+Environment=OLLAMA_HOST=http://localhost:11434
+Environment=POSTGRES_HOST=localhost
+Environment=POSTGRES_PORT=5432
+Environment=POSTGRES_DB=ai_office
+Environment=POSTGRES_USER=postgres
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

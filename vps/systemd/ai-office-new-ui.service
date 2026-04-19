@@ -1,0 +1,15 @@
+[Unit]
+Description=AI Office — OpenClaw Office UI (BigTech изометрический UI)
+After=network.target openclaw.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/openclaw-office --port 3001
+Restart=on-failure
+RestartSec=5
+Environment=OPENCLAW_WS_URL=ws://localhost:18789
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

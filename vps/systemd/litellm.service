@@ -1,0 +1,15 @@
+[Unit]
+Description=LiteLLM — Anthropic API proxy → Ollama (для Claude Code)
+After=network.target ollama.service
+
+[Service]
+Type=simple
+ExecStart=/opt/ai-office/mempalace-venv/bin/litellm --model ollama_chat/glm-5:cloud --port 8082 --drop_params
+Restart=on-failure
+RestartSec=10
+Environment=OLLAMA_API_BASE=http://localhost:11434
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

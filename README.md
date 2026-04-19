@@ -4,28 +4,50 @@
 
 ## Возможности
 
-- **Всегда на связи** — работает на виртуальном сервере, не зависит от вашего компьютера
+- **Всегда на связи** — работает на VPS, не зависит от вашего компьютера
 - **Личная база знаний** — PostgreSQL с pgvector, MemPalace для семантической памяти
 - **Голосовые сообщения** — расшифровка через faster-Whisper локально на сервере
 - **Мультиагентная работа** — инфраструктурный, исследовательский агенты и агент базы знаний
-- **Интеграции** — Google Документы, Gmail, GitHub, Notion, Jira через Composio
-- **Наблюдаемость** — Star Office UI (пиксельный дашборд) + Grafana
+- **Интеграции** — Gmail, Google Calendar, GitHub, Notion, Jira через Composio
+- **Наблюдаемость** — Star Office UI (пиксельный дашборд) + OpenClaw Office UI + Grafana
 
 ## Быстрый старт
 
-Смотрите полную документацию: **[Руководство по настройке](docs-site/docs/setup-guide/prerequisites.md)**
+### Требования
 
-Краткая схема:
-1. Арендуйте VPS (Ubuntu 22.04, 4+ ГБ RAM)
-2. Установите PostgreSQL, Ollama, Node.js на сервере
-3. Установите и настройте OpenClaw (`npm install -g openclaw`)
-4. Подключите Telegram-бота
-5. Настройте Star Office UI и Grafana для наблюдаемости
+- VPS Ubuntu 22.04, 4+ ГБ RAM (рекомендуется 8+ ГБ для Ollama)
+- Telegram-бот (создаётся у @BotFather)
+- Аккаунт Ollama (для cloud-моделей glm-5, kimi-k2.5)
+
+### Установка
+
+```bash
+# 1. Клонировать репозиторий
+git clone git@github.com:sidnevart/chappi-ai-office.git
+cd chappi-ai-office
+
+# 2. Заполнить переменные окружения
+cp .env.example .env
+# Отредактируй .env: токен Telegram, IP сервера, пароль БД и т.д.
+
+# 3. Скопировать .env на VPS и запустить установку
+scp .env root@YOUR_VPS_IP:/root/.env
+ssh root@YOUR_VPS_IP "bash -s" < vps/setup.sh
+```
+
+После установки:
+```bash
+# На VPS — завершить настройку вручную:
+ollama signin                              # для cloud-моделей
+openclaw channels add telegram --token $OPENCLAW_TG_BOT
+```
+
+Подробное руководство: **[docs-site/docs/setup-guide/prerequisites.md](docs-site/docs/setup-guide/prerequisites.md)**
 
 ## Архитектура
 
 ```
-Telegram ←→ OpenClaw (VPS) ←→ Ollama (qwen3/glm-5/kimi-k2.5)
+Telegram ←→ OpenClaw (VPS :18789) ←→ Ollama (qwen3/glm-5/kimi-k2.5)
                 ↓
          PostgreSQL + MemPalace (база знаний)
                 ↓
@@ -34,21 +56,37 @@ Telegram ←→ OpenClaw (VPS) ←→ Ollama (qwen3/glm-5/kimi-k2.5)
 
 ## Дашборды
 
-| Компонент | Назначение |
-|-----------|-----------|
-| [Star Office UI](:3000) | Визуальный статус агентов |
-| [Grafana](:4000) | Метрики и аналитика |
+| Компонент | Порт | Назначение |
+|-----------|------|-----------|
+| Star Office UI | :3000 | Пиксельный визуальный статус агентов |
+| OpenClaw Office UI | :3001 | BigTech изометрический офис |
+| Grafana | :4000 | Метрики и аналитика |
+| Документация | :5000 | Руководства владельца и по настройке |
 
 ## Структура репозитория
 
 ```
-ai_office/
-├── docs-site/          # Документация (Docusaurus)
+chappi-ai-office/
+├── .env.example              # Шаблон переменных окружения
+├── docker-compose.yml        # PostgreSQL + Grafana
+├── docs-site/                # Документация (Docusaurus)
+│   └── docs/
+│       ├── owner-manual/     # Руководство владельца (8 статей)
+│       └── setup-guide/      # Руководство по настройке (11 статей)
+├── vps/
+│   ├── setup.sh              # Скрипт установки на чистый VPS
+│   ├── schema.sql            # Схема PostgreSQL (9 таблиц + pgvector)
+│   ├── systemd/              # Шаблоны systemd-служб
+│   ├── star-office/          # Flask Blueprint для AI Office роутов
+│   ├── voice/                # Транскрипция голосовых (Whisper)
+│   └── notify/               # Telegram-уведомления
+├── .openclaw/
+│   └── workspace/AGENTS.md  # Шаблон инструкций для агента
 ├── .claude/
-│   ├── agents/         # Субагенты Claude Code
-│   ├── skills/         # Навыки Claude Code
-│   └── hooks/          # Хуки безопасности
-└── tunnel/             # Скрипты туннеля Mac → сервер
+│   ├── agents/               # Субагенты Claude Code
+│   ├── skills/               # Навыки Claude Code (slash commands)
+│   └── hooks/                # Хуки безопасности
+└── tunnel/                   # Скрипты туннеля Mac → сервер
 ```
 
 ## Лицензия

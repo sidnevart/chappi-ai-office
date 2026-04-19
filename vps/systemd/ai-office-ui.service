@@ -1,0 +1,23 @@
+[Unit]
+Description=AI Office Star-Office-UI
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ai-office/star-office/backend
+ExecStart=/opt/ai-office/mempalace-venv/bin/python3 app.py
+Restart=on-failure
+RestartSec=5
+EnvironmentFile=/root/.env
+Environment=FLASK_ENV=production
+Environment=OPENCLAW_WORKSPACE=/root/.openclaw/workspace
+Environment=POSTGRES_HOST=localhost
+Environment=POSTGRES_PORT=5432
+Environment=POSTGRES_DB=ai_office
+Environment=POSTGRES_USER=postgres
+Environment=STAR_BACKEND_PORT=3000
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

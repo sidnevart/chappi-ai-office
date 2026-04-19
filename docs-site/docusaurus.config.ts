@@ -90,7 +90,12 @@ const config: Config = {
         },
         {
           href: 'http://80.74.25.43:3000',
-          label: '🏢 Star Office UI',
+          label: '🌟 Star Office UI',
+          position: 'right',
+        },
+        {
+          href: 'http://80.74.25.43:3001',
+          label: '🏢 Office UI (new)',
           position: 'right',
         },
         {
@@ -118,7 +123,8 @@ const config: Config = {
         {
           title: 'Dashboards',
           items: [
-            {label: '🏢 Star Office UI', href: 'http://80.74.25.43:3000'},
+            {label: '🌟 Star Office UI', href: 'http://80.74.25.43:3000'},
+            {label: '🏢 Office UI (new)', href: 'http://80.74.25.43:3001'},
             {label: '📊 Grafana', href: 'http://80.74.25.43:4000'},
           ],
         },

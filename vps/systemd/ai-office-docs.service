@@ -1,0 +1,12 @@
+[Unit]
+Description=AI Office Documentation (Docusaurus)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/serve /opt/ai-office/docs/build -p 5000 -n
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
