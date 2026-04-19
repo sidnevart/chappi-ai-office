@@ -210,7 +210,26 @@ systemctl is-active ai-office-new-ui && echo "✅ UI up on :3001" || echo "❌ s
 
 ---
 
-## Fix 6: Config Validation Error (agents.list / heartbeat)
+## Fix 6: Config Validation Error — gateway.bind
+
+**Cause:** After restoring config from partial backup, `gateway.bind` may be set to `"all"` or `"loopback"` which are invalid in newer versions. Valid: `"lan"`, `"tailnet"`, `"auto"`, `"custom"`.
+
+```bash
+python3 -c "
+import json
+with open('/root/.openclaw/openclaw.json') as f:
+    cfg = json.load(f)
+cfg['gateway']['bind'] = 'lan'
+with open('/root/.openclaw/openclaw.json', 'w') as f:
+    json.dump(cfg, f, indent=2)
+print('Fixed gateway.bind = lan')
+"
+systemctl restart openclaw
+```
+
+---
+
+## Fix 7: Config Validation Error (agents.list / heartbeat)
 
 **Cause:** openclaw.json restored from partial backup has deprecated fields.
 
@@ -283,4 +302,5 @@ fi
 | Bot silent, no telegram logs at startup | channels.telegram lost from openclaw.json | Fix 4 |
 | Office UI shows "reconnecting" forever | Device pending + auto-approve timer off | Fix 1 + check timer |
 | openclaw crashes in loop | restart counter limit | Fix 4 cause 2 |
-| Config validation errors | Deprecated fields in agents.list | Fix 6 |
+| Config validation: gateway.bind invalid | "all"/"loopback" not valid in this version | Fix 6 |
+| Config validation errors | Deprecated fields in agents.list | Fix 7 |
