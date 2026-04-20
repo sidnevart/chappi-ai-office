@@ -13,6 +13,7 @@ Environment=POSTGRES_HOST=localhost
 Environment=POSTGRES_PORT=5432
 Environment=POSTGRES_DB=ai_office
 Environment=POSTGRES_USER=postgres
+ExecStartPre=/usr/local/sbin/openclaw-config-guard.sh
 ExecStartPre=/usr/local/sbin/openclaw-preflight.sh
 ExecStart=/usr/bin/openclaw gateway run --port 18789 --bind lan --ws-log compact
 Restart=always
