@@ -1,8 +1,14 @@
 # Future Compatibility Notes
 
+## Claude Runner: Backend Modes
+
+**Production default:** Claude Code CLI uses the native Anthropic backend. This is the only zero-config production path.
+
+**Alternative backends such as Kimi or GLM:** Claude Code cannot talk to them directly. They require an explicit Anthropic-compatible bridge and must not be treated as zero-config.
+
 ## Claude Code CLI → Ollama Backend
 
-Claude Code CLI uses the Anthropic SDK. To redirect it to a local/custom backend:
+Claude Code CLI uses the Anthropic SDK. To redirect it to a local/custom backend, put a bridge in front of the target model backend:
 
 ```bash
 # Point Claude Code at Ollama's OpenAI-compatible endpoint
@@ -16,7 +22,7 @@ export ANTHROPIC_API_KEY=ollama   # dummy key, ollama ignores it
 **Caveat:** Claude Code expects Claude-specific response formats (tool_use, thinking blocks).
 Ollama models respond in OpenAI format. Full compatibility requires a proxy layer.
 
-**Recommended proxy:** `litellm` — translates between Anthropic and OpenAI formats:
+**Required bridge example:** `litellm` translates between Anthropic and OpenAI formats:
 ```bash
 pip install litellm
 litellm --model ollama/glm-5:cloud --port 8082 --drop_params
@@ -46,7 +52,7 @@ Docs: https://github.com/openai/codex
 
 | Tool | Best for | Model |
 |------|---------|-------|
-| Claude Code CLI | Complex multi-file coding, planning | Needs Claude-format proxy |
+| Claude Code CLI | Complex multi-file coding, planning | Native Claude by default; custom backends need a Claude-format bridge |
 | Codex CLI | Single-shot code gen, scripts | Direct ollama compat |
 | OpenClaw agent | Telegram interactions, research, automation | glm-5:cloud / minimax-m2:cloud |
 
