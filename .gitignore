@@ -43,3 +43,6 @@ npm-debug.log*
 .codex/
 openclaw-control/.runtime/
 openclaw-control/.rendered/
+
+# Локальные скрипты с секретами
+tunnel/publish-url.sh
