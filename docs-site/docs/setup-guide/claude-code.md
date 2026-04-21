@@ -58,16 +58,20 @@ claude
 
 ---
 
-## Использование Ollama-моделей с VPS (экономия токенов)
+## Использование кастомного backend для Claude Code
 
-По умолчанию Claude Code использует Anthropic API. Можно переключиться на модели Ollama на VPS.
+По умолчанию Claude Code использует Anthropic API. Это и есть основной production-путь.
+
+Если нужен `Kimi/GLM` или другой не-Claude backend, нужен отдельный Anthropic-compatible bridge. Напрямую в raw Ollama Claude Code отправлять нельзя.
 
 ### Алиасы в ~/.zshrc
 
 ```bash
-# Claude Code → Ollama на VPS (через litellm прокси)
-alias cc-local='ANTHROPIC_BASE_URL=http://YOUR_VPS_IP:8082 ANTHROPIC_API_KEY=ollama claude'
-alias cc-cloud='unset ANTHROPIC_BASE_URL ANTHROPIC_API_KEY && claude'
+# Claude Code → стандартный Anthropic backend
+alias cc-native='unset ANTHROPIC_BASE_URL ANTHROPIC_API_KEY && claude'
+
+# Claude Code → кастомный Anthropic-compatible bridge
+alias cc-bridge='ANTHROPIC_BASE_URL=http://YOUR_BRIDGE_HOST:PORT ANTHROPIC_API_KEY=bridge-token claude'
 
 # Codex → Ollama напрямую (через SSH-туннель)
 alias cx-light='OPENAI_BASE_URL=http://localhost:11434/v1 OPENAI_API_KEY=ollama codex -m qwen3:8b'
@@ -76,22 +80,20 @@ alias cx-medium='OPENAI_BASE_URL=http://localhost:11434/v1 OPENAI_API_KEY=ollama
 
 Использование:
 ```bash
-cc-local   # Claude Code → qwen3/glm-5 через VPS
-cc-cloud   # Claude Code → стандартный Anthropic API
+cc-native  # Claude Code → стандартный Anthropic API
+cc-bridge  # Claude Code → bridge для Kimi/GLM
 cx-light   # Codex → qwen3:8b (лёгкие задачи)
 ```
 
-### Что нужно на VPS
+### Что нужно для Kimi/GLM
 
-**litellm** — прокси, переводящий формат Anthropic → OpenAI (для Ollama):
+Нужен отдельный bridge, который:
 
-```bash
-# Уже настроен как systemd-служба: ai-office/vps/systemd/litellm.service
-systemctl status litellm   # проверить
-systemctl start litellm    # запустить если не работает
-```
+- принимает Anthropic-compatible запросы от Claude Code
+- сам маршрутизирует их в целевой backend
+- корректно поддерживает tool-use flow
 
-Слушает на порту 8082.
+Пока такого bridge нет, production-путь для Claude runner — native Claude backend.
 
 ### SSH-туннель для Codex (Ollama на порту 11434)
 

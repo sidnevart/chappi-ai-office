@@ -18,10 +18,41 @@ journalctl -u openclaw -n 50
 - OpenClaw упал — `systemctl restart openclaw`
 - Ollama не запущен — `systemctl restart ollama`
 - Проблема с токеном Telegram — проверьте `OPENCLAW_TG_BOT` в `/etc/systemd/system/openclaw.service`
+- Невалидный конфиг — запустите `openclaw doctor --fix`
 
 ---
 
-## Star Office UI недоступен (порт 3000)
+## OpenClaw Office UI недоступен (https://80.74.25.43/)
+
+```bash
+# Проверить nginx
+systemctl status nginx
+nginx -t
+
+# Проверить, что UI бэкенд работает
+ss -tlnp | grep -E '3001|18789'
+
+# Проверить WebSocket
+curl -s -k -H 'Upgrade: websocket' -H 'Connection: Upgrade' \
+  https://localhost/gateway-ws
+# Ожидаем: 400 (нормально — неполный WS handshake)
+
+# Перезапуск
+systemctl restart nginx
+```
+
+**Типичные причины:**
+- nginx не запущен или сломан конфиг
+- OpenClaw gateway на порту 18789 недоступен
+- SSL-сертификат просрочен
+
+---
+
+## Star Office UI (legacy, порт 3000)
+
+:::caution Устаревший интерфейс
+Star Office UI больше не является основным. Используйте [OpenClaw Office UI](https://80.74.25.43/).
+:::
 
 ```bash
 systemctl status ai-office-ui
@@ -37,6 +68,51 @@ systemctl restart ai-office-ui
 docker ps | grep grafana
 docker logs ai-office-grafana --tail 30
 docker restart ai-office-grafana
+```
+
+**Проблема с PostgreSQL datasource:**
+```bash
+# Проверить пароль postgres
+docker exec ai-office-postgres psql -U postgres -c 'SELECT 1;'
+
+# Если ошибка авторизации — сбросить пароль
+docker exec -u postgres ai-office-postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
+```
+
+---
+
+## openclaw-control сервисы
+
+```bash
+# Проверить webhook server
+systemctl status openclaw-control-webhook
+journalctl -u openclaw-control-webhook -n 30
+
+# Проверить monitoring
+systemctl status openclaw-control-monitoring
+journalctl -u openclaw-control-monitoring -n 30
+
+# Перезапуск
+systemctl restart openclaw-control-webhook
+systemctl restart openclaw-control-monitoring
+```
+
+---
+
+## Approval gate: задача "застряла"
+
+Если спека или PR digest ожидает approval, но уведомление не пришло:
+
+```bash
+# Посмотреть список на approval
+/opt/openclaw-control/scripts/oc-approval list
+
+# Одобрить вручную
+/opt/openclaw-control/scripts/oc-approval approve spec-pvti_42
+
+# Проверить state файлы
+ls -la /opt/openclaw-control/.runtime/approvals/
+cat /opt/openclaw-control/.runtime/approvals/spec-pvti_42.json
 ```
 
 ---

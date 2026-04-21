@@ -36,10 +36,8 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/sidnevart/chappi-ai-office/tree/main/docs-site/',
         },
         blog: {
           showReadingTime: true,
@@ -47,10 +45,8 @@ const config: Config = {
             type: ['rss', 'atom'],
             xslt: true,
           },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/sidnevart/chappi-ai-office/tree/main/docs-site/',
           // Useful options to enforce blogging best practices
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
@@ -89,13 +85,8 @@ const config: Config = {
           label: 'Setup Guide',
         },
         {
-          href: 'http://80.74.25.43:3000',
-          label: '🌟 Star Office UI',
-          position: 'right',
-        },
-        {
-          href: 'http://80.74.25.43:3001',
-          label: '🏢 Office UI (new)',
+          href: 'https://80.74.25.43/',
+          label: '🏢 Office UI',
           position: 'right',
         },
         {
@@ -123,8 +114,7 @@ const config: Config = {
         {
           title: 'Dashboards',
           items: [
-            {label: '🌟 Star Office UI', href: 'http://80.74.25.43:3000'},
-            {label: '🏢 Office UI (new)', href: 'http://80.74.25.43:3001'},
+            {label: '🏢 Office UI', href: 'https://80.74.25.43/'},
             {label: '📊 Grafana', href: 'http://80.74.25.43:4000'},
           ],
         },

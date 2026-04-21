@@ -33,7 +33,7 @@ openclaw channels list  # проверить
 ```bash
 openclaw models aliases add light ollama/qwen3:8b
 openclaw models aliases add medium ollama/glm-5:cloud
-openclaw models aliases add heavy ollama/kimi-k2.5:cloud
+openclaw models aliases add heavy ollama/kimi-k2.6:cloud
 
 # Проверить
 openclaw models aliases list

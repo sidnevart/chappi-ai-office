@@ -128,7 +128,7 @@ ollama signin
 # Загрузить модели
 ollama pull qwen3:8b
 ollama pull glm-5:cloud
-ollama pull kimi-k2.5:cloud
+ollama pull kimi-k2.6:cloud
 ```
 
 ## Брандмауэр
