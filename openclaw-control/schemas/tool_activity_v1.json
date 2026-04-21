@@ -1,0 +1,15 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "agent_id": { "type": "string" },
+    "completed_at": { "format": "date-time", "type": "string" },
+    "started_at": { "format": "date-time", "type": "string" },
+    "status": { "enum": ["started", "completed", "failed"] },
+    "summary": { "type": "string" },
+    "tool_activity_id": { "type": "string" },
+    "tool_name": { "type": "string" }
+  },
+  "required": ["agent_id", "started_at", "status", "tool_activity_id", "tool_name"],
+  "title": "tool_activity_v1",
+  "type": "object"
+}

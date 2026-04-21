@@ -1,0 +1,48 @@
+{
+  "gateway": {
+    "port": 18789,
+    "bind": "lan",
+    "auth": {
+      "mode": "token",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+    },
+    "controlUi": {
+      "basePath": "/control",
+      "allowInsecureAuth": false,
+      "allowedOrigins": [
+        "${OPENCLAW_ALLOWED_ORIGIN}"
+      ]
+    },
+    "trustedProxies": [
+      "127.0.0.1"
+    ]
+  },
+  "agents": {
+    "defaults": {
+      "contextTokens": 100000,
+      "compaction": {
+        "mode": "safeguard",
+        "reserveTokensFloor": 30000,
+        "memoryFlush": {
+          "enabled": true,
+          "softThresholdTokens": 12000
+        }
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8,
+        "maxSpawnDepth": 3,
+        "runTimeoutSeconds": 600,
+        "allowAgents": ["*"]
+      }
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "${OPENCLAW_TG_BOT}",
+      "groupPolicy": "allowlist",
+      "streamMode": "partial"
+    }
+  }
+}

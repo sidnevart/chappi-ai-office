@@ -1,0 +1,25 @@
+version: 1
+
+defaults:
+  require_diff: true
+  require_backup: true
+  require_validation: true
+
+targets:
+  monitoring-hotfix:
+    backup:
+      - /opt/ai-office/repo/vps/monitoring/promtail.yml
+    validate:
+      - docker compose config -q
+      - docker ps --format '{{.Names}} {{.Status}}'
+  runtime-config:
+    backup:
+      - /root/.openclaw/openclaw.json
+    validate:
+      - openclaw health
+      - systemctl is-active openclaw.service
+  systemd-sync:
+    backup:
+      - /etc/systemd/system
+    validate:
+      - systemctl daemon-reload

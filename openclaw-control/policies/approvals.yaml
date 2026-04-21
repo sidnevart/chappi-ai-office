@@ -1,0 +1,35 @@
+version: 1
+
+classes:
+  automatic:
+    description: read-only or low-risk actions
+  dry_run:
+    description: preview only until human confirms
+  explicit_approval:
+    description: dry-run first, human approval required
+  never_automatic:
+    description: prohibited without direct human command
+
+rules:
+  - surface: openclaw_config
+    class: explicit_approval
+  - surface: workspace_identity_files
+    class: explicit_approval
+  - surface: hook_registry_and_handlers
+    class: explicit_approval
+  - surface: secrets_and_tokens
+    class: never_automatic
+  - surface: skill_install_update_delete
+    class: explicit_approval
+  - surface: systemd_units
+    class: explicit_approval
+  - surface: shell_commands_side_effects
+    class: explicit_approval
+  - surface: git_push_and_pr_create
+    class: explicit_approval
+  - surface: merge_close_reopen_branch_delete
+    class: never_automatic
+  - surface: telegram_messages_to_humans
+    class: explicit_approval
+  - surface: destructive_file_db_network
+    class: never_automatic

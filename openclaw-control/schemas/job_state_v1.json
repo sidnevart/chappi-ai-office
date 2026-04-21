@@ -1,0 +1,21 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "job_id": { "type": "string" },
+    "item_id": { "type": "string" },
+    "kind": { "enum": ["sdlc_job", "research_job"] },
+    "missing_fields": { "items": { "type": "string" }, "type": "array" },
+    "owner": { "type": "string" },
+    "project_key": { "type": "string" },
+    "repository": { "type": "string" },
+    "run_id": { "type": "string" },
+    "session_key": { "pattern": "^(sdlc|research):", "type": "string" },
+    "state": { "type": "string" },
+    "status": { "type": "string" },
+    "title": { "type": "string" },
+    "updated_at": { "format": "date-time", "type": "string" }
+  },
+  "required": ["job_id", "kind", "owner", "run_id", "session_key", "state", "updated_at"],
+  "title": "job_state_v1",
+  "type": "object"
+}

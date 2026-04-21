@@ -1,0 +1,13 @@
+[Unit]
+Description=OpenClaw Control Research Runner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/openclaw-control
+EnvironmentFile=/root/.env
+ExecStart=/usr/bin/bash /opt/openclaw-control/scripts/oc-research run-due
+TimeoutStartSec=300s
+StandardOutput=journal
+StandardError=journal

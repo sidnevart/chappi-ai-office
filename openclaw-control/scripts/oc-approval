@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMMAND="${1:-}"
+
+if [[ -f "$ROOT/../.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/../.env"
+  set +a
+fi
+if [[ -f /root/.env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source /root/.env
+  set +a
+fi
+
+case "$COMMAND" in
+  list)
+    python3 "$ROOT/lib/approval_ops.py" list
+    ;;
+  approve|reject|deliver|deliver-spec)
+    shift
+    python3 "$ROOT/lib/approval_ops.py" "$COMMAND" "$@"
+    ;;
+  *)
+    echo "usage: oc-approval <list|approve|reject|deliver|deliver-spec> [args...]"
+    exit 1
+    ;;
+esac

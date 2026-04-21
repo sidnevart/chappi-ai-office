@@ -1,0 +1,218 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+APPLY=0
+ENVIRONMENT="${CONTROL_ENV:-local}"
+TARGET=""
+
+if [[ -f "$ROOT/../.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/../.env"
+  set +a
+fi
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --apply)
+      APPLY=1
+      ;;
+    --env)
+      ENVIRONMENT="${2:-}"
+      shift
+      ;;
+    *)
+      TARGET="${1:-}"
+      ;;
+  esac
+  shift
+done
+
+if [[ -z "$TARGET" ]]; then
+  echo "usage: oc-rollout [--apply] [--env local|vps] <monitoring-hotfix|postgres-adopt|control-plane|runtime-config|systemd-sync|nginx-sync|webhook-activate|monitoring-activate>"
+  exit 1
+fi
+
+case "$TARGET" in
+  monitoring-hotfix)
+    echo "[oc-rollout] target=$TARGET"
+    echo "[oc-rollout] sync file: $ROOT/../vps/monitoring/promtail.yml"
+    echo "[oc-rollout] validate: docker compose config -q"
+    echo "[oc-rollout] remote restart: docker compose up -d promtail"
+    [[ "$APPLY" -eq 1 ]] || exit 0
+    ;;
+  postgres-adopt)
+    echo "[oc-rollout] target=$TARGET"
+    echo "[oc-rollout] will backup current postgres, remove legacy container, and start compose-managed postgres"
+    [[ "$APPLY" -eq 1 ]] || exit 0
+    ;;
+  control-plane)
+    echo "[oc-rollout] target=$TARGET"
+    echo "[oc-rollout] environment=$ENVIRONMENT"
+    if [[ "$ENVIRONMENT" == "local" ]]; then
+      DEST="${CONTROL_INSTALL_DIR:-$HOME/.openclaw/control-plane}"
+      echo "[oc-rollout] local sync destination: $DEST"
+      echo "[oc-rollout] local render target: $DEST/rendered/openclaw.json"
+      [[ "$APPLY" -eq 1 ]] || exit 0
+      python3 "$ROOT/lib/control_plane.py" sync-tree "$DEST"
+      "$ROOT/scripts/oc-render-config" "$ROOT/openclaw.json.template" "$DEST/rendered/openclaw.json"
+      exit 0
+    fi
+    echo "[oc-rollout] remote sync destination: /opt/openclaw-control"
+    [[ "$APPLY" -eq 1 ]] || exit 0
+    ;;
+  runtime-config)
+    echo "[oc-rollout] target=$TARGET"
+    echo "[oc-rollout] environment=$ENVIRONMENT"
+    if [[ "$ENVIRONMENT" == "local" ]]; then
+      DEST="${OPENCLAW_CONFIG_PATH:-$HOME/.openclaw/openclaw.json}"
+      echo "[oc-rollout] local config target: $DEST"
+      echo "[oc-rollout] backup target: $DEST.bak.<timestamp>"
+      [[ "$APPLY" -eq 1 ]] || exit 0
+      mkdir -p "$(dirname "$DEST")"
+      [[ -f "$DEST" ]] && cp "$DEST" "$DEST.bak.$(date +%Y%m%d-%H%M%S)"
+      "$ROOT/scripts/oc-render-config" "$ROOT/openclaw.json.template" "$DEST"
+      exit 0
+    fi
+    echo "[oc-rollout] remote config target: /root/.openclaw/openclaw.json"
+    [[ "$APPLY" -eq 1 ]] || exit 0
+    ;;
+  systemd-sync)
+    echo "[oc-rollout] target=$TARGET"
+    echo "[oc-rollout] environment=$ENVIRONMENT"
+    if [[ "$ENVIRONMENT" == "local" ]]; then
+      echo "[oc-rollout] local mode keeps templates in-repo; no live systemd sync"
+      exit 0
+    fi
+    echo "[oc-rollout] remote unit target: openclaw.service, openclaw-control-monitoring.service, openclaw-control-webhook.service"
+    [[ "$APPLY" -eq 1 ]] || exit 0
+    ;;
+  nginx-sync)
+    echo "[oc-rollout] target=$TARGET"
+    echo "[oc-rollout] environment=$ENVIRONMENT"
+    if [[ "$ENVIRONMENT" == "local" ]]; then
+      echo "[oc-rollout] local mode keeps nginx templates in-repo; no live nginx sync"
+      exit 0
+    fi
+    echo "[oc-rollout] remote nginx target: /etc/nginx/snippets/openclaw-webhooks.inc and /etc/nginx/sites-enabled/openclaw-ssl"
+    [[ "$APPLY" -eq 1 ]] || exit 0
+    ;;
+  webhook-activate)
+    echo "[oc-rollout] target=$TARGET"
+    echo "[oc-rollout] environment=$ENVIRONMENT"
+    if [[ "$ENVIRONMENT" == "local" ]]; then
+      echo "[oc-rollout] local mode does not manage live webhook services"
+      exit 0
+    fi
+    echo "[oc-rollout] remote activation target: openclaw-control-webhook.service"
+    [[ "$APPLY" -eq 1 ]] || exit 0
+    ;;
+  monitoring-activate)
+    echo "[oc-rollout] target=$TARGET"
+    echo "[oc-rollout] environment=$ENVIRONMENT"
+    if [[ "$ENVIRONMENT" == "local" ]]; then
+      echo "[oc-rollout] local mode does not manage live monitoring services"
+      exit 0
+    fi
+    echo "[oc-rollout] remote activation target: openclaw-control-monitoring.service"
+    [[ "$APPLY" -eq 1 ]] || exit 0
+    ;;
+  *)
+    echo "unknown target: $TARGET"
+    exit 1
+    ;;
+esac
+
+if [[ -z "${SERVER_USER:-}" || -z "${SERVER_IP:-${SERVER_HOST:-}}" ]]; then
+  echo "SERVER_USER and SERVER_IP or SERVER_HOST are required"
+  exit 1
+fi
+
+HOST="${SERVER_IP:-$SERVER_HOST}"
+SSH=(ssh -o StrictHostKeyChecking=no "$SERVER_USER@$HOST")
+if [[ -n "${SERVER_PASSWORD:-}" ]] && command -v sshpass >/dev/null 2>&1; then
+  export SSHPASS="$SERVER_PASSWORD"
+  SSH=(sshpass -e ssh -o StrictHostKeyChecking=no "$SERVER_USER@$HOST")
+fi
+
+SCPCMD=(scp -o StrictHostKeyChecking=no)
+if [[ -n "${SERVER_PASSWORD:-}" ]] && command -v sshpass >/dev/null 2>&1; then
+  SCPCMD=(sshpass -e scp -o StrictHostKeyChecking=no)
+fi
+
+case "$TARGET" in
+  monitoring-hotfix)
+    "${SSH[@]}" "mkdir -p /tmp/openclaw-control-backups && cp /opt/ai-office/repo/vps/monitoring/promtail.yml /tmp/openclaw-control-backups/promtail.yml.\$(date +%Y%m%d-%H%M%S)"
+    "${SCPCMD[@]}" "$ROOT/../vps/monitoring/promtail.yml" "$SERVER_USER@$HOST:/opt/ai-office/repo/vps/monitoring/promtail.yml"
+    "${SSH[@]}" "cd /opt/ai-office/repo && docker compose config -q && docker compose up -d promtail && docker logs ai-office-promtail --tail 30"
+    ;;
+  postgres-adopt)
+    "${SCPCMD[@]}" "$ROOT/../docker-compose.yml" "$SERVER_USER@$HOST:/opt/ai-office/repo/docker-compose.yml"
+    "${SSH[@]}" "set -euo pipefail
+      source /root/.env
+      mkdir -p /tmp/openclaw-control-backups
+      stamp=\$(date +%Y%m%d-%H%M%S)
+      volume=\$(docker inspect ai-office-postgres --format '{{range .Mounts}}{{if eq .Destination \"/var/lib/postgresql/data\"}}{{.Name}}{{end}}{{end}}')
+      grep -q '^POSTGRES_VOLUME_NAME=' /root/.env && sed -i \"s/^POSTGRES_VOLUME_NAME=.*/POSTGRES_VOLUME_NAME=\$volume/\" /root/.env || echo \"POSTGRES_VOLUME_NAME=\$volume\" >> /root/.env
+      docker exec ai-office-postgres pg_dumpall -U postgres > /tmp/openclaw-control-backups/postgres-\$stamp.sql
+      docker inspect ai-office-postgres > /tmp/openclaw-control-backups/postgres-\$stamp.inspect.json
+      docker rm -f ai-office-postgres
+      cd /opt/ai-office/repo
+      set -a
+      source /root/.env
+      set +a
+      POSTGRES_PASSWORD=\${POSTGRES_PASSWORD:-} docker compose up -d postgres
+      docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep ai-office-postgres
+      for i in 1 2 3 4 5; do docker exec ai-office-postgres pg_isready -U postgres && exit 0 || sleep 2; done
+      exit 1
+    "
+    ;;
+  control-plane)
+    "${SSH[@]}" "mkdir -p /opt/openclaw-control"
+    "${SCPCMD[@]}" -r "$ROOT/." "$SERVER_USER@$HOST:/opt/openclaw-control/"
+    "${SSH[@]}" "python3 -m py_compile /opt/openclaw-control/lib/control_plane.py && chmod +x /opt/openclaw-control/scripts/* /opt/openclaw-control/hooks/*.sh"
+    ;;
+  runtime-config)
+    "${SSH[@]}" "mkdir -p /root/.openclaw /tmp/openclaw-control-backups && if [[ -f /root/.openclaw/openclaw.json ]]; then cp /root/.openclaw/openclaw.json /tmp/openclaw-control-backups/openclaw.json.\$(date +%Y%m%d-%H%M%S); fi"
+    "${SCPCMD[@]}" "$ROOT/openclaw.json.template" "$SERVER_USER@$HOST:/opt/openclaw-control/openclaw.json.template"
+    "${SSH[@]}" "set -euo pipefail
+      set -a
+      source /root/.env
+      set +a
+      mkdir -p /root/.openclaw
+      python3 /opt/openclaw-control/lib/control_plane.py render-config /opt/openclaw-control/openclaw.json.template /root/.openclaw/openclaw.json
+    "
+    ;;
+  systemd-sync)
+    "${SSH[@]}" "stamp=\$(date +%Y%m%d-%H%M%S); backup_dir=/tmp/openclaw-control-backups/systemd-\$stamp; mkdir -p \"\$backup_dir\"; for unit in /etc/systemd/system/openclaw.service /etc/systemd/system/openclaw-control-monitoring.service /etc/systemd/system/openclaw-control-webhook.service /etc/systemd/system/openclaw-control-gateway.service; do [[ -f \"\$unit\" ]] && cp \"\$unit\" \"\$backup_dir/\" || true; done"
+    "${SCPCMD[@]}" "$ROOT/systemd/templates/openclaw.service" "$SERVER_USER@$HOST:/tmp/openclaw.service"
+    "${SCPCMD[@]}" "$ROOT/systemd/templates/openclaw-control-monitoring.service" "$SERVER_USER@$HOST:/tmp/openclaw-control-monitoring.service"
+    "${SCPCMD[@]}" "$ROOT/systemd/templates/openclaw-control-webhook.service" "$SERVER_USER@$HOST:/tmp/openclaw-control-webhook.service"
+    "${SSH[@]}" "install -m 0644 /tmp/openclaw.service /etc/systemd/system/openclaw.service && install -m 0644 /tmp/openclaw-control-monitoring.service /etc/systemd/system/openclaw-control-monitoring.service && install -m 0644 /tmp/openclaw-control-webhook.service /etc/systemd/system/openclaw-control-webhook.service && rm -f /etc/systemd/system/openclaw-control-gateway.service && systemctl daemon-reload"
+    ;;
+  nginx-sync)
+    bash "$ROOT/scripts/oc-nginx-sync" apply
+    ;;
+  webhook-activate)
+    "${SSH[@]}" "set -euo pipefail
+      source /root/.env
+      if [[ -z \"\${GITHUB_WEBHOOK_SECRET:-}\" ]]; then
+        echo '[oc-rollout] GITHUB_WEBHOOK_SECRET missing in /root/.env'
+        exit 1
+      fi
+      systemctl enable openclaw-control-webhook.service
+      systemctl restart openclaw-control-webhook.service
+      systemctl is-active openclaw-control-webhook.service
+      systemctl status --no-pager --lines=20 openclaw-control-webhook.service
+    "
+    ;;
+  monitoring-activate)
+    "${SSH[@]}" "set -euo pipefail
+      systemctl enable openclaw-control-monitoring.service
+      systemctl restart openclaw-control-monitoring.service
+      systemctl is-active openclaw-control-monitoring.service
+      systemctl status --no-pager --lines=20 openclaw-control-monitoring.service
+    "
+    ;;
+esac

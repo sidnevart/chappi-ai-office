@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+MODE="${1:-dry-run}"
+
+if [[ -f "$ROOT/../.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/../.env"
+  set +a
+fi
+
+if [[ -z "${SERVER_USER:-}" || -z "${SERVER_IP:-${SERVER_HOST:-}}" ]]; then
+  echo "SERVER_USER and SERVER_IP or SERVER_HOST are required"
+  exit 1
+fi
+
+HOST="${SERVER_IP:-$SERVER_HOST}"
+export SSHPASS="${SERVER_PASSWORD:-}"
+SSH=(ssh -o StrictHostKeyChecking=no "$SERVER_USER@$HOST")
+if [[ -n "${SERVER_PASSWORD:-}" ]] && command -v sshpass >/dev/null 2>&1; then
+  SSH=(sshpass -e ssh -o StrictHostKeyChecking=no "$SERVER_USER@$HOST")
+fi
+
+echo "[oc-postgres-env-sync] mode=$MODE"
+echo "[oc-postgres-env-sync] remote target: /root/.env"
+[[ "$MODE" == "apply" ]] || exit 0
+
+"${SSH[@]}" "set -euo pipefail
+  test -f /root/.env
+  if grep -q '^POSTGRES_PASSWORD=' /root/.env; then
+    echo '[oc-postgres-env-sync] /root/.env already has POSTGRES_PASSWORD'
+    exit 0
+  fi
+  password_line=\$(docker inspect ai-office-postgres --format '{{range .Config.Env}}{{println .}}{{end}}' | awk '/^POSTGRES_PASSWORD=/{print; found=1; exit} END{if(!found) exit 1}')
+  password=\"\${password_line#POSTGRES_PASSWORD=}\"
+  mkdir -p /tmp/openclaw-control-backups/env
+  cp /root/.env /tmp/openclaw-control-backups/env/root.env.postgres.\$(date +%Y%m%d-%H%M%S)
+  printf '\nPOSTGRES_PASSWORD=%s\n' \"\$password\" >> /root/.env
+  chmod 600 /root/.env
+  echo '[oc-postgres-env-sync] synced POSTGRES_PASSWORD from running container'
+"

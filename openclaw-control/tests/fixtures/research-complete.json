@@ -1,0 +1,32 @@
+{
+  "delivery_route": "research_digests",
+  "filters_metrics": {
+    "budget_max": 180000,
+    "commute_minutes_max": 45,
+    "districts": ["Khamovniki", "Presnya"],
+    "rooms": [2, 3]
+  },
+  "output_format": ["table", "telegram_digest"],
+  "output_schema": [
+    "url",
+    "address",
+    "price",
+    "rooms",
+    "area_m2",
+    "commute_minutes",
+    "source",
+    "score",
+    "notes"
+  ],
+  "schedule": "0 9 * * 1-5",
+  "sources": [
+    "Cian",
+    "Avito",
+    "Telegram real estate channels"
+  ],
+  "stop_conditions": [
+    "human stops job",
+    "30 days elapsed",
+    "10 high-score matches found"
+  ]
+}

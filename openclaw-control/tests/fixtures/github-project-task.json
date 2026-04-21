@@ -1,0 +1,14 @@
+{
+  "acceptance_criteria": [
+    "Spec is created before implementation",
+    "Approval is required before branch creation"
+  ],
+  "body": "Create a deterministic OpenClaw SDLC task and keep its state durable.",
+  "labels": ["openclaw", "sdlc"],
+  "project_owner": "sidnevart",
+  "project_title": "AI Office",
+  "repository": "sidnevart/chappi-ai-office",
+  "session_key": "sdlc:github-project:canary",
+  "task_id": "project-task-canary",
+  "title": "OpenClaw SDLC project task canary"
+}

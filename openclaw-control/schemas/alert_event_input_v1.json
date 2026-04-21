@@ -1,0 +1,15 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "correlation_id": { "type": "string" },
+    "dedupe_key": { "type": "string" },
+    "event_type": { "type": "string" },
+    "next_action": { "type": "string" },
+    "severity": { "enum": ["critical", "high", "medium", "low"] },
+    "summary": { "type": "string" },
+    "system": { "type": "string" }
+  },
+  "required": ["event_type", "severity", "summary", "system"],
+  "title": "alert_event_input_v1",
+  "type": "object"
+}

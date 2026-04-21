@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+TARGET="${1:-monitoring-hotfix}"
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ -f "$ROOT/../.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/../.env"
+  set +a
+fi
+
+if [[ -z "${SERVER_USER:-}" || -z "${SERVER_IP:-${SERVER_HOST:-}}" ]]; then
+  echo "SERVER_USER and SERVER_IP or SERVER_HOST are required"
+  exit 1
+fi
+
+HOST="${SERVER_IP:-$SERVER_HOST}"
+SSH=(ssh -o StrictHostKeyChecking=no "$SERVER_USER@$HOST")
+if [[ -n "${SERVER_PASSWORD:-}" ]] && command -v sshpass >/dev/null 2>&1; then
+  SSH=(sshpass -e ssh -o StrictHostKeyChecking=no "$SERVER_USER@$HOST")
+fi
+
+case "$TARGET" in
+  monitoring-hotfix)
+    "${SSH[@]}" "latest=\$(ls -1t /tmp/openclaw-control-backups/promtail.yml.* 2>/dev/null | head -1); test -n \"\$latest\"; cp \"\$latest\" /opt/ai-office/repo/vps/monitoring/promtail.yml; cd /opt/ai-office/repo && docker compose up -d promtail && docker logs ai-office-promtail --tail 30"
+    ;;
+  postgres-adopt)
+    "${SSH[@]}" "set -euo pipefail
+      latest=\$(ls -1t /tmp/openclaw-control-backups/postgres-*.sql 2>/dev/null | head -1)
+      test -n \"\$latest\"
+      docker exec -i ai-office-postgres psql -U postgres < \"\$latest\"
+      docker exec ai-office-postgres pg_isready -U postgres
+    "
+    ;;
+  runtime-config)
+    "${SSH[@]}" "set -euo pipefail
+      latest=\$(ls -1t /tmp/openclaw-control-backups/openclaw.json.* 2>/dev/null | head -1)
+      test -n \"\$latest\"
+      cp \"\$latest\" /root/.openclaw/openclaw.json
+    "
+    ;;
+  systemd-sync)
+    "${SSH[@]}" "set -euo pipefail
+      latest_dir=\$(ls -1dt /tmp/openclaw-control-backups/systemd-* 2>/dev/null | head -1)
+      test -n \"\$latest_dir\"
+      for unit in openclaw.service openclaw-control-monitoring.service openclaw-control-webhook.service openclaw-control-gateway.service; do
+        [[ -f \"\$latest_dir/\$unit\" ]] && cp \"\$latest_dir/\$unit\" \"/etc/systemd/system/\$unit\"
+      done
+      systemctl daemon-reload
+    "
+    ;;
+  nginx-sync)
+    "${SSH[@]}" "set -euo pipefail
+      latest=\$(ls -1t /tmp/openclaw-control-backups/nginx/openclaw-ssl.* 2>/dev/null | head -1)
+      test -n \"\$latest\"
+      cp \"\$latest\" /etc/nginx/sites-enabled/openclaw-ssl
+      nginx -t
+      systemctl reload nginx
+    "
+    ;;
+  webhook-activate)
+    "${SSH[@]}" "systemctl disable --now openclaw-control-webhook.service || true"
+    ;;
+  monitoring-activate)
+    "${SSH[@]}" "systemctl disable --now openclaw-control-monitoring.service || true"
+    ;;
+  *)
+    echo \"rollback target not implemented: $TARGET\"
+    exit 1
+    ;;
+esac

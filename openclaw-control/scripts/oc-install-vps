@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+APPLY=0
+SYSTEMD_SYNC=1
+RUNTIME_CONFIG=1
+NGINX_SYNC=1
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --apply)
+      APPLY=1
+      ;;
+    --no-systemd-sync)
+      SYSTEMD_SYNC=0
+      ;;
+    --no-runtime-config)
+      RUNTIME_CONFIG=0
+      ;;
+    --no-nginx-sync)
+      NGINX_SYNC=0
+      ;;
+    *)
+      echo "usage: oc-install-vps [--apply] [--no-systemd-sync] [--no-runtime-config] [--no-nginx-sync]"
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+echo "[oc-install-vps] preflight"
+"$ROOT/scripts/oc-preflight" vps
+echo "[oc-install-vps] audit"
+"$ROOT/scripts/oc-audit"
+echo "[oc-install-vps] rollout: control-plane"
+"$ROOT/scripts/oc-rollout" --env vps control-plane
+if [[ "$RUNTIME_CONFIG" -eq 1 ]]; then
+  echo "[oc-install-vps] rollout: runtime-config"
+  "$ROOT/scripts/oc-rollout" --env vps runtime-config
+fi
+if [[ "$SYSTEMD_SYNC" -eq 1 ]]; then
+  echo "[oc-install-vps] rollout: systemd-sync"
+  "$ROOT/scripts/oc-rollout" --env vps systemd-sync
+fi
+if [[ "$NGINX_SYNC" -eq 1 ]]; then
+  echo "[oc-install-vps] rollout: nginx-sync"
+  "$ROOT/scripts/oc-rollout" --env vps nginx-sync
+fi
+
+if [[ "$APPLY" -eq 0 ]]; then
+  echo "[oc-install-vps] dry-run complete"
+  exit 0
+fi
+
+"$ROOT/scripts/oc-rollout" --apply --env vps control-plane
+if [[ "$RUNTIME_CONFIG" -eq 1 ]]; then
+  "$ROOT/scripts/oc-rollout" --apply --env vps runtime-config
+fi
+if [[ "$SYSTEMD_SYNC" -eq 1 ]]; then
+  "$ROOT/scripts/oc-rollout" --apply --env vps systemd-sync
+fi
+if [[ "$NGINX_SYNC" -eq 1 ]]; then
+  "$ROOT/scripts/oc-rollout" --apply --env vps nginx-sync
+fi
+echo "[oc-install-vps] applied"

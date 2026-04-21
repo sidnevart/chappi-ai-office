@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMMAND="${1:-}"
+
+if [[ -f "$ROOT/../.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/../.env"
+  set +a
+fi
+if [[ -f /root/.env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source /root/.env
+  set +a
+fi
+
+case "$COMMAND" in
+  normalize-webhook|sync|from-webhook|prepare-spec|publish-spec|publish-request|publish-artifact|bootstrap-branch|run-coder|record-pr|record-ci|status)
+    shift
+    python3 "$ROOT/lib/sdlc_ops.py" "$COMMAND" "$@"
+    ;;
+  *)
+    echo "usage: oc-sdlc <normalize-webhook|sync|from-webhook|prepare-spec|publish-spec|publish-request|publish-artifact|bootstrap-branch|run-coder|record-pr|record-ci|status> ..."
+    exit 1
+    ;;
+esac

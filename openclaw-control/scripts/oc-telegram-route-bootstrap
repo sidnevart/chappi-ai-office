@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+MODE="${1:-dry-run}"
+
+if [[ -f "$ROOT/../.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/../.env"
+  set +a
+fi
+
+if [[ -z "${SERVER_USER:-}" || -z "${SERVER_IP:-${SERVER_HOST:-}}" ]]; then
+  echo "SERVER_USER and SERVER_IP or SERVER_HOST are required"
+  exit 1
+fi
+
+HOST="${SERVER_IP:-$SERVER_HOST}"
+export SSHPASS="${SERVER_PASSWORD:-}"
+SSH=(ssh -o StrictHostKeyChecking=no "$SERVER_USER@$HOST")
+if [[ -n "${SERVER_PASSWORD:-}" ]] && command -v sshpass >/dev/null 2>&1; then
+  SSH=(sshpass -e ssh -o StrictHostKeyChecking=no "$SERVER_USER@$HOST")
+fi
+
+echo "[oc-telegram-route-bootstrap] mode=$MODE"
+echo "[oc-telegram-route-bootstrap] remote target: /root/.env"
+[[ "$MODE" == "apply" ]] || exit 0
+
+"${SSH[@]}" "set -euo pipefail
+  test -f /root/.env
+  set -a
+  source /root/.env
+  set +a
+  mkdir -p /tmp/openclaw-control-backups/env
+  cp /root/.env /tmp/openclaw-control-backups/env/root.env.telegram.\$(date +%Y%m%d-%H%M%S)
+  changed=0
+  if ! grep -q '^TELEGRAM_ALERTS_CHAT_ID=' /root/.env && [[ -n \"\${TG_ALERTS_CHAT_ID:-}\" ]]; then
+    printf '\nTELEGRAM_ALERTS_CHAT_ID=%s\n' \"\$TG_ALERTS_CHAT_ID\" >> /root/.env
+    echo '[oc-telegram-route-bootstrap] mapped TELEGRAM_ALERTS_CHAT_ID from TG_ALERTS_CHAT_ID'
+    changed=1
+  fi
+  if ! grep -q '^TELEGRAM_SPECS_CHAT_ID=' /root/.env && [[ -n \"\${TG_NOTIFY_CHAT_ID:-}\" ]]; then
+    printf '\nTELEGRAM_SPECS_CHAT_ID=%s\n' \"\$TG_NOTIFY_CHAT_ID\" >> /root/.env
+    echo '[oc-telegram-route-bootstrap] mapped TELEGRAM_SPECS_CHAT_ID from TG_NOTIFY_CHAT_ID'
+    changed=1
+  fi
+  if ! grep -q '^TELEGRAM_PRS_CHAT_ID=' /root/.env && [[ -n \"\${TG_NOTIFY_CHAT_ID:-}\" ]]; then
+    printf '\nTELEGRAM_PRS_CHAT_ID=%s\n' \"\$TG_NOTIFY_CHAT_ID\" >> /root/.env
+    echo '[oc-telegram-route-bootstrap] mapped TELEGRAM_PRS_CHAT_ID from TG_NOTIFY_CHAT_ID'
+    changed=1
+  fi
+  if ! grep -q '^TELEGRAM_RESEARCH_CHAT_ID=' /root/.env && [[ -n \"\${TG_NOTIFY_CHAT_ID:-}\" ]]; then
+    printf '\nTELEGRAM_RESEARCH_CHAT_ID=%s\n' \"\$TG_NOTIFY_CHAT_ID\" >> /root/.env
+    echo '[oc-telegram-route-bootstrap] mapped TELEGRAM_RESEARCH_CHAT_ID from TG_NOTIFY_CHAT_ID'
+    changed=1
+  fi
+  chmod 600 /root/.env
+  if [[ \"\$changed\" -eq 0 ]]; then
+    echo '[oc-telegram-route-bootstrap] no changes'
+  fi
+"

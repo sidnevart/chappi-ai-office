@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMMAND="${1:-}"
+
+case "$COMMAND" in
+  start-interview|update-intake|create-job|run-job|digest|run-due|pause|resume|stop|status)
+    shift
+    python3 "$ROOT/lib/research_ops.py" "$COMMAND" "$@"
+    ;;
+  *)
+    echo "usage: oc-research <start-interview|update-intake|create-job|run-job|digest|run-due|pause|resume|stop|status> ..."
+    exit 1
+    ;;
+esac

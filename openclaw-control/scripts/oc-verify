@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+MODE="${1:-local}"
+
+if [[ -f "$ROOT/../.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/../.env"
+  set +a
+fi
+
+case "$MODE" in
+  local)
+    echo "[oc-verify] mode=local"
+    if [[ -f "${HOME}/.openclaw/control-plane/openclaw.json.template" ]]; then
+      echo "[oc-verify] bundle present"
+    else
+      echo "[oc-verify] bundle missing"
+    fi
+    if [[ -f "${HOME}/.openclaw/control-plane/rendered/openclaw.json" ]]; then
+      echo "[oc-verify] rendered bundle config present"
+    else
+      echo "[oc-verify] rendered bundle config missing"
+    fi
+    openclaw --version >/dev/null
+    ;;
+  vps)
+    echo "[oc-verify] mode=vps"
+    if [[ -z "${SERVER_USER:-}" || -z "${SERVER_IP:-${SERVER_HOST:-}}" ]]; then
+      echo "SERVER_USER and SERVER_IP or SERVER_HOST are required"
+      exit 1
+    fi
+    HOST="${SERVER_IP:-$SERVER_HOST}"
+    SSH=(ssh -o StrictHostKeyChecking=no "$SERVER_USER@$HOST")
+    if [[ -n "${SERVER_PASSWORD:-}" ]] && command -v sshpass >/dev/null 2>&1; then
+      export SSHPASS="$SERVER_PASSWORD"
+      SSH=(sshpass -e ssh -o StrictHostKeyChecking=no "$SERVER_USER@$HOST")
+    fi
+    "${SSH[@]}" "test -f /opt/openclaw-control/openclaw.json.template && echo '[oc-verify] remote bundle present'"
+    "${SSH[@]}" "test -f /root/.openclaw/openclaw.json && echo '[oc-verify] remote runtime config present' || true"
+    "${SSH[@]}" "for unit in openclaw.service openclaw-control-monitoring.service openclaw-control-webhook.service openclaw-control-gateway.service; do systemctl list-unit-files \"\$unit\" --no-legend 2>/dev/null || true; done"
+    "${SSH[@]}" "for unit in openclaw.service openclaw-control-monitoring.service openclaw-control-webhook.service; do state=\$(systemctl is-active \"\$unit\" 2>/dev/null || true); if [[ -n \"\$state\" ]]; then echo \"[oc-verify] \$unit active=\$state\"; fi; done"
+    "${SSH[@]}" "test -f /etc/nginx/snippets/openclaw-webhooks.inc && echo '[oc-verify] nginx webhook snippet present' || true"
+    "${SSH[@]}" "grep -q 'openclaw-webhooks.inc' /etc/nginx/sites-enabled/openclaw-ssl && echo '[oc-verify] nginx webhook route patched' || true"
+    "${SSH[@]}" "nginx -t >/dev/null 2>&1 && echo '[oc-verify] nginx config valid' || true"
+    "${SSH[@]}" "if [[ -f /etc/systemd/system/openclaw-control-gateway.service ]]; then echo '[oc-verify] warning: deprecated openclaw-control-gateway.service is present and should stay disabled'; fi"
+    ;;
+  *)
+    echo "usage: oc-verify [local|vps]"
+    exit 1
+    ;;
+esac

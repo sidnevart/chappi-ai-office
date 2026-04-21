@@ -1,0 +1,22 @@
+[Unit]
+Description=OpenClaw Control GitHub Webhook Intake
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/openclaw-control
+EnvironmentFile=/root/.env
+Environment=CONTROL_WEBHOOK_PORT=8787
+Environment=CONTROL_WEBHOOK_PATH=/hooks/github/projects-v2-item
+Environment=CONTROL_DELIVERY_MODE=dry-run
+ExecStart=/usr/bin/bash /opt/openclaw-control/scripts/oc-webhook-server
+Restart=always
+RestartSec=5s
+TimeoutStartSec=30s
+TimeoutStopSec=15s
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+APPROVAL_ID="${1:?usage: oc-approval-reject <approval-id>}"
+bash "$ROOT/scripts/oc-approval" reject "$APPROVAL_ID"

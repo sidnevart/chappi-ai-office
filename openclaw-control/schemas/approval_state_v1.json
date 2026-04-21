@@ -1,0 +1,17 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "approval_class": { "enum": ["automatic", "dry_run", "explicit_approval", "never_automatic"] },
+    "approval_id": { "type": "string" },
+    "created_at": { "format": "date-time", "type": "string" },
+    "delivery_route": { "type": "string" },
+    "item_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "session_key": { "pattern": "^approval:", "type": "string" },
+    "status": { "enum": ["pending", "approved", "rejected", "expired"] },
+    "title": { "type": "string" }
+  },
+  "required": ["approval_class", "approval_id", "created_at", "run_id", "session_key", "status"],
+  "title": "approval_state_v1",
+  "type": "object"
+}

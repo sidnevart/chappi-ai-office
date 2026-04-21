@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMMAND="${1:-}"
+
+if [[ -f "$ROOT/../.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/../.env"
+  set +a
+fi
+if [[ -f /root/.env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source /root/.env
+  set +a
+fi
+
+case "$COMMAND" in
+  create-task|set-status|sync-status|close-canary)
+    shift
+    python3 "$ROOT/lib/github_project_ops.py" "$COMMAND" "$@"
+    ;;
+  *)
+    echo "usage: oc-github-project <create-task|set-status|sync-status|close-canary> [--apply] <payload.json>"
+    exit 1
+    ;;
+esac

@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+APPLY=0
+RENDER_CONFIG=0
+SYNC_CODEX=1
+SYNC_CLAUDE=1
+STRICT_CODEX_SYNC=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --apply)
+      APPLY=1
+      ;;
+    --render-config)
+      RENDER_CONFIG=1
+      ;;
+    --no-sync-codex)
+      SYNC_CODEX=0
+      ;;
+    --no-sync-claude)
+      SYNC_CLAUDE=0
+      ;;
+    --strict-codex-sync)
+      STRICT_CODEX_SYNC=1
+      ;;
+    *)
+      echo "usage: oc-install-local [--apply] [--render-config] [--no-sync-codex] [--no-sync-claude] [--strict-codex-sync]"
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+echo "[oc-install-local] preflight"
+"$ROOT/scripts/oc-preflight" local
+echo "[oc-install-local] audit"
+"$ROOT/scripts/oc-audit"
+echo "[oc-install-local] rollout: control-plane"
+"$ROOT/scripts/oc-rollout" --env local control-plane
+if [[ "$RENDER_CONFIG" -eq 1 ]]; then
+  echo "[oc-install-local] rollout: runtime-config"
+  "$ROOT/scripts/oc-rollout" --env local runtime-config
+fi
+if [[ "$SYNC_CODEX" -eq 1 ]]; then
+  echo "[oc-install-local] sync codex skills"
+  if ! "$ROOT/scripts/oc-sync-codex-skills"; then
+    if [[ "$STRICT_CODEX_SYNC" -eq 1 ]]; then
+      exit 1
+    fi
+    echo "[oc-install-local] warning: codex skill sync skipped due to local permission constraints"
+  fi
+fi
+if [[ "$SYNC_CLAUDE" -eq 1 ]]; then
+  echo "[oc-install-local] sync claude skills"
+  "$ROOT/scripts/oc-sync-claude-skills"
+fi
+
+if [[ "$APPLY" -eq 0 ]]; then
+  echo "[oc-install-local] dry-run complete"
+  exit 0
+fi
+
+"$ROOT/scripts/oc-rollout" --apply --env local control-plane
+if [[ "$RENDER_CONFIG" -eq 1 ]]; then
+  "$ROOT/scripts/oc-rollout" --apply --env local runtime-config
+fi
+echo "[oc-install-local] applied"

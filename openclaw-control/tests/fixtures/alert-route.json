@@ -1,0 +1,8 @@
+{
+  "correlation_id": "incident-42",
+  "event_type": "runtime.alert",
+  "next_action": "Inspect Promtail and gateway health",
+  "severity": "high",
+  "summary": "Synthetic alert test",
+  "system": "runtime"
+}

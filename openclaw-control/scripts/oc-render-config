@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TEMPLATE="${1:-$ROOT/openclaw.json.template}"
+OUTPUT="${2:-$ROOT/.rendered/openclaw.json}"
+
+python3 "$ROOT/lib/control_plane.py" render-config "$TEMPLATE" "$OUTPUT"

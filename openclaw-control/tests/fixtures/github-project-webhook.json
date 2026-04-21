@@ -1,0 +1,26 @@
+{
+  "action": "edited",
+  "changes": {
+    "field_value": {
+      "field_node_id": "PVTSSF_lAHO1234zg8AAAAB"
+    }
+  },
+  "installation": {
+    "id": 123456
+  },
+  "organization": {
+    "login": "artemsidnev"
+  },
+  "projects_v2": {
+    "id": 42,
+    "node_id": "PVT_kwDOB1234M4A",
+    "title": "AI Office SDLC"
+  },
+  "projects_v2_item": {
+    "id": 777,
+    "node_id": "PVTI_lAHO1234zg8AAAAB"
+  },
+  "sender": {
+    "login": "octocat"
+  }
+}

@@ -1,0 +1,30 @@
+version: 1
+
+hooks:
+  - id: github-project-sync
+    event: github.project_item.changed
+    owner: sdlc-orchestrator
+    handler: hooks/github-project-sync.sh
+    timeout_seconds: 30
+    retry_policy: bounded
+    approval_class: dry_run
+    input_schema: github_project_item_v1
+    delivery: internal
+  - id: spec-review-publish
+    event: sdlc.spec.ready
+    owner: office-controller
+    handler: hooks/spec-review-publish.sh
+    timeout_seconds: 30
+    retry_policy: bounded
+    approval_class: explicit_approval
+    input_schema: spec_review_request_v1
+    delivery: telegram.specs
+  - id: alert-route
+    event: runtime.alert
+    owner: alert-router
+    handler: hooks/alert-route.sh
+    timeout_seconds: 15
+    retry_policy: bounded
+    approval_class: automatic
+    input_schema: alert_event_input_v1
+    delivery: telegram.alerts

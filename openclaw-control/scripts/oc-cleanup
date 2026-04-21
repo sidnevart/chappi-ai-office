@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT/.."
+
+echo "[oc-cleanup] duplicate shell helpers:"
+find vps/scripts -maxdepth 1 -type f -name '*.sh' | sort
+echo "[oc-cleanup] systemd units:"
+find vps/systemd -maxdepth 1 -type f | sort
+echo "[oc-cleanup] preferred operator entrypoints:"
+printf '%s\n' \
+  openclaw-control/scripts/oc-audit \
+  openclaw-control/scripts/oc-rollout \
+  openclaw-control/scripts/oc-rollback \
+  openclaw-control/scripts/oc-hook-test \
+  openclaw-control/scripts/oc-alert-test \
+  openclaw-control/scripts/oc-cleanup \
+  openclaw-control/scripts/oc-sdlc \
+  openclaw-control/scripts/oc-spec-artifact \
+  openclaw-control/scripts/oc-research \
+  openclaw-control/scripts/oc-github-project \
+  openclaw-control/scripts/oc-approval
+echo "[oc-cleanup] compatibility wrappers to fold over time:"
+printf '%s\n' \
+  openclaw-control/scripts/oc-sdlc-sync \
+  openclaw-control/scripts/oc-github-project-normalize \
+  openclaw-control/scripts/oc-sdlc-from-github-webhook \
+  openclaw-control/scripts/oc-spec-publish \
+  openclaw-control/scripts/oc-approval-list \
+  openclaw-control/scripts/oc-approval-approve \
+  openclaw-control/scripts/oc-approval-reject \
+  openclaw-control/scripts/oc-spec-deliver

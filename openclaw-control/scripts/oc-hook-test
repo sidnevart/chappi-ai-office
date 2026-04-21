@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TMPDIR="$(mktemp -d)"
+trap 'rm -rf "$TMPDIR"' EXIT
+
+echo "[oc-hook-test] checking registry"
+rg -n "approval_class|handler|event" "$ROOT/hooks/registry.yaml" >/dev/null
+echo "[oc-hook-test] checking session key policy"
+rg -n "sdlc:|research:|ops:|approval:" "$ROOT/hooks/session-key-policy.md" >/dev/null
+echo "[oc-hook-test] checking python helper"
+python3 -m py_compile "$ROOT/lib/control_plane.py"
+python3 -m py_compile "$ROOT/lib/hook_run.py"
+echo "[oc-hook-test] executing hook fixtures"
+for hook in github-project-sync spec-review-publish alert-route; do
+  fixture="$ROOT/tests/fixtures/$hook.json"
+  output="$(CONTROL_STATE_DIR="$TMPDIR/state" CONTROL_DELIVERY_MODE=dry-run RUN_ID="test-$hook" "$ROOT/scripts/oc-hook-run" "$hook" "$fixture")"
+  python3 -c 'import json, sys; hook = sys.argv[1]; payload = json.load(sys.stdin); assert payload["status"] in {"ok", "error"}; assert payload["run_id"] == f"test-{hook}"; assert payload["summary"]' "$hook" <<<"$output"
+done
+test -f "$TMPDIR/state/jobs/sdlc/ai-office/pvti_42.json"
+test -f "$TMPDIR/state/approvals/spec-pvti_42.json"
+test -f "$TMPDIR/state/alerts/events/test-alert-route.json"
+echo "[oc-hook-test] validating durable state schemas"
+"$ROOT/scripts/oc-state-validate" \
+  job_state_v1 "$TMPDIR/state/jobs/sdlc/ai-office/pvti_42.json" \
+  approval_state_v1 "$TMPDIR/state/approvals/spec-pvti_42.json" \
+  alert_event_v1 "$TMPDIR/state/alerts/events/test-alert-route.json" \
+  agent_state_v1 "$ROOT/tests/fixtures/agent-state.json" \
+  tool_activity_v1 "$ROOT/tests/fixtures/tool-activity.json"
+echo "[oc-hook-test] ok"

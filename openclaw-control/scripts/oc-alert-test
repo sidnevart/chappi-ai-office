@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CHANNEL="${1:-alerts}"
+TMPDIR="$(mktemp -d)"
+trap 'rm -rf "$TMPDIR"' EXIT
+
+echo "[oc-alert-test] channel=$CHANNEL"
+echo "[oc-alert-test] routing policy source: $ROOT/policies/routing.yaml"
+echo "[oc-alert-test] sample payload execution:"
+CONTROL_STATE_DIR="$TMPDIR/state" CONTROL_DELIVERY_MODE=dry-run RUN_ID="oc-alert-test" \
+  "$ROOT/hooks/alert-route.sh" "$ROOT/tests/fixtures/alert-route.json"

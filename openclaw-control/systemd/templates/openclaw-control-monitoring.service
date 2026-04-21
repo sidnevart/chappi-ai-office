@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenClaw Control Monitoring Stack
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/ai-office/repo
+EnvironmentFile=/root/.env
+ExecStartPre=/usr/bin/docker compose config -q
+ExecStart=/usr/bin/docker compose up -d grafana prometheus node-exporter loki promtail
+ExecStop=/usr/bin/docker compose stop grafana prometheus node-exporter loki promtail
+
+[Install]
+WantedBy=multi-user.target

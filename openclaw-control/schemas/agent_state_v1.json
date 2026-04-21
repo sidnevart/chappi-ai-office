@@ -1,0 +1,16 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "active_job_id": { "type": "string" },
+    "agent_id": { "type": "string" },
+    "current_tool_activity_id": { "type": "string" },
+    "heartbeat_at": { "format": "date-time", "type": "string" },
+    "role": { "type": "string" },
+    "session_key": { "pattern": "^(sdlc|research|ops|approval):", "type": "string" },
+    "state": { "enum": ["idle", "running", "waiting", "blocked", "errored"] },
+    "zone": { "type": "string" }
+  },
+  "required": ["agent_id", "heartbeat_at", "role", "state", "zone"],
+  "title": "agent_state_v1",
+  "type": "object"
+}

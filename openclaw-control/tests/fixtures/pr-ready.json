@@ -1,0 +1,7 @@
+{
+  "head_sha": "abc123def456",
+  "pr_number": 42,
+  "pr_url": "https://github.com/artemsidnev/ai_office/pull/42",
+  "status": "open",
+  "title": "Implement control-plane routing"
+}

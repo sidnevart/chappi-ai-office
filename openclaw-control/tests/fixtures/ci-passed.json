@@ -1,0 +1,6 @@
+{
+  "conclusion": "passed",
+  "status": "passed",
+  "summary": "All CI checks passed",
+  "workflow": "ci"
+}

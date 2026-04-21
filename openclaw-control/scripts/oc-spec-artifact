@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMMAND="${1:-}"
+
+case "$COMMAND" in
+  publish)
+    shift
+    python3 "$ROOT/lib/sdlc_ops.py" publish-artifact "$@"
+    ;;
+  *)
+    echo "usage: oc-spec-artifact publish <project-key> <item-id>"
+    exit 1
+    ;;
+esac

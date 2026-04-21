@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+MODE="${1:-dry-run}"
+
+if [[ -f "$ROOT/../.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/../.env"
+  set +a
+fi
+
+if [[ -z "${SERVER_USER:-}" || -z "${SERVER_IP:-${SERVER_HOST:-}}" ]]; then
+  echo "SERVER_USER and SERVER_IP or SERVER_HOST are required"
+  exit 1
+fi
+
+HOST="${SERVER_IP:-$SERVER_HOST}"
+export SSHPASS="${SERVER_PASSWORD:-}"
+SSH=(ssh -o StrictHostKeyChecking=no "$SERVER_USER@$HOST")
+SCPCMD=(scp -o StrictHostKeyChecking=no)
+if [[ -n "${SERVER_PASSWORD:-}" ]] && command -v sshpass >/dev/null 2>&1; then
+  SSH=(sshpass -e ssh -o StrictHostKeyChecking=no "$SERVER_USER@$HOST")
+  SCPCMD=(sshpass -e scp -o StrictHostKeyChecking=no)
+fi
+
+echo "[oc-nginx-sync] mode=$MODE"
+echo "[oc-nginx-sync] remote target: /etc/nginx/snippets/openclaw-webhooks.inc and /etc/nginx/sites-enabled/openclaw-ssl"
+[[ "$MODE" == "apply" ]] || exit 0
+
+"${SSH[@]}" "mkdir -p /tmp/openclaw-control-backups/nginx && cp /etc/nginx/sites-enabled/openclaw-ssl /tmp/openclaw-control-backups/nginx/openclaw-ssl.\$(date +%Y%m%d-%H%M%S)"
+"${SCPCMD[@]}" "$ROOT/nginx/templates/openclaw-webhooks.inc" "$SERVER_USER@$HOST:/tmp/openclaw-webhooks.inc"
+"${SCPCMD[@]}" "$ROOT/lib/nginx_patch.py" "$SERVER_USER@$HOST:/tmp/nginx_patch.py"
+"${SSH[@]}" "install -m 0644 /tmp/openclaw-webhooks.inc /etc/nginx/snippets/openclaw-webhooks.inc && python3 /tmp/nginx_patch.py /etc/nginx/sites-enabled/openclaw-ssl && nginx -t && systemctl reload nginx"

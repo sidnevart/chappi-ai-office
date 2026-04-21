@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PAYLOAD="${1:-$ROOT/tests/fixtures/github-project-webhook.json}"
+
+if [[ -f "$ROOT/../.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/../.env"
+  set +a
+fi
+
+if [[ ! -f "$PAYLOAD" ]]; then
+  echo "payload not found: $PAYLOAD"
+  exit 1
+fi
+
+if [[ -z "${SERVER_USER:-}" || -z "${SERVER_IP:-${SERVER_HOST:-}}" ]]; then
+  echo "SERVER_USER and SERVER_IP or SERVER_HOST are required"
+  exit 1
+fi
+
+HOST="${SERVER_IP:-$SERVER_HOST}"
+REMOTE_PAYLOAD="/tmp/openclaw-webhook-probe.json"
+export SSHPASS="${SERVER_PASSWORD:-}"
+SSH=(ssh -o StrictHostKeyChecking=no "$SERVER_USER@$HOST")
+SCPCMD=(scp -o StrictHostKeyChecking=no)
+if [[ -n "${SERVER_PASSWORD:-}" ]] && command -v sshpass >/dev/null 2>&1; then
+  SSH=(sshpass -e ssh -o StrictHostKeyChecking=no "$SERVER_USER@$HOST")
+  SCPCMD=(sshpass -e scp -o StrictHostKeyChecking=no)
+fi
+
+"${SCPCMD[@]}" "$PAYLOAD" "$SERVER_USER@$HOST:$REMOTE_PAYLOAD"
+"${SSH[@]}" "set -euo pipefail
+  set -a
+  source /root/.env
+  set +a
+  test -n \"\${GITHUB_WEBHOOK_SECRET:-}\"
+  url=\"\${OPENCLAW_ALLOWED_ORIGIN%/}\${CONTROL_WEBHOOK_PATH:-/hooks/github/projects-v2-item}\"
+  sig=\$(openssl dgst -sha256 -hmac \"\$GITHUB_WEBHOOK_SECRET\" \"$REMOTE_PAYLOAD\" | awk '{print \$2}')
+  code=\$(curl -ksS -o /tmp/openclaw-webhook-probe.out -w '%{http_code}' \
+    -X POST \"\$url\" \
+    -H 'Content-Type: application/json' \
+    -H 'X-GitHub-Event: projects_v2_item' \
+    -H \"X-Hub-Signature-256: sha256=\$sig\" \
+    --data-binary @\"$REMOTE_PAYLOAD\")
+  cat /tmp/openclaw-webhook-probe.out
+  echo
+  echo \"[oc-webhook-probe] http_code=\$code\"
+  [[ \"\$code\" == '200' ]]
+"

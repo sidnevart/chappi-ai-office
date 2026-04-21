@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT/.."
+
+echo "[oc-audit] repo root: $(pwd)"
+echo "[oc-audit] checking control-plane files"
+test -f openclaw-control/openclaw.json.template
+test -f openclaw-control/policies/approvals.yaml
+test -f openclaw-control/hooks/registry.yaml
+echo "[oc-audit] checking compose"
+docker compose config -q
+echo "[oc-audit] checking script syntax"
+for file in openclaw-control/scripts/*; do
+  [ -f "$file" ] || continue
+  bash -n "$file"
+done
+echo "[oc-audit] checking python helper syntax"
+python3 -m py_compile openclaw-control/lib/control_plane.py
+python3 -m py_compile openclaw-control/lib/approval_ops.py
+python3 -m py_compile openclaw-control/lib/github_project_normalize.py
+python3 -m py_compile openclaw-control/lib/nginx_patch.py
+python3 -m py_compile openclaw-control/lib/state_validate.py
+python3 -m py_compile openclaw-control/lib/hook_run.py
+python3 -m py_compile openclaw-control/lib/webhook_server.py
+echo "[oc-audit] ok"

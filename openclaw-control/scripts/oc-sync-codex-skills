@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$ROOT/.."
+DEST="$REPO_ROOT/.codex/skills"
+CONFIG="$REPO_ROOT/.codex/config.toml"
+SUPERPOWERS_DIR="${SUPERPOWERS_DIR:-/tmp/superpowers}"
+
+mkdir -p "$DEST"
+
+if [[ -d "$SUPERPOWERS_DIR/skills" ]]; then
+  echo "[oc-sync-codex-skills] syncing superpowers from $SUPERPOWERS_DIR/skills"
+  find "$SUPERPOWERS_DIR/skills" -maxdepth 1 -mindepth 1 -type d | while read -r dir; do
+    name="$(basename "$dir")"
+    rm -rf "$DEST/$name"
+    if command -v rsync >/dev/null 2>&1; then
+      rsync -a --delete "$dir/" "$DEST/$name/"
+    else
+      cp -R "$dir" "$DEST/"
+    fi
+  done
+else
+  echo "[oc-sync-codex-skills] superpowers checkout missing: $SUPERPOWERS_DIR"
+  exit 1
+fi
+
+if command -v rsync >/dev/null 2>&1; then
+  rsync -a --delete "$ROOT/skills/references/" "$DEST/references/"
+else
+  rm -rf "$DEST/references"
+  cp -R "$ROOT/skills/references" "$DEST/"
+fi
+
+echo "[oc-sync-codex-skills] syncing ai-office local skills"
+for dir in "$ROOT"/skills/*; do
+  [[ -d "$dir" ]] || continue
+  [[ "$(basename "$dir")" == "references" ]] && continue
+  rm -rf "$DEST/$(basename "$dir")"
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete "$dir/" "$DEST/$(basename "$dir")/"
+  else
+    cp -R "$dir" "$DEST/"
+  fi
+done
+
+echo "[oc-sync-codex-skills] synced skill directories into $DEST"
+echo "[oc-sync-codex-skills] registered config entries:"
+rg -n '\[\[skills\.config\]\]|path = ".codex/skills/' "$CONFIG"

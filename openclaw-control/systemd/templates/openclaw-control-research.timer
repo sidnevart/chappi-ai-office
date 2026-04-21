@@ -1,0 +1,12 @@
+[Unit]
+Description=Run OpenClaw Control research jobs on schedule
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=15min
+AccuracySec=30s
+Persistent=true
+Unit=openclaw-control-research.service
+
+[Install]
+WantedBy=timers.target

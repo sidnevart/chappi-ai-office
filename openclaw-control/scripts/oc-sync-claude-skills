@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$ROOT/.."
+DEST="$REPO_ROOT/.claude/skills"
+SUPERPOWERS_DIR="${SUPERPOWERS_DIR:-/tmp/superpowers}"
+
+copy_skill_dir() {
+  local src_dir="$1"
+  local dest_dir="$2"
+  mkdir -p "$dest_dir"
+  find "$src_dir" -maxdepth 1 -type f | while read -r file; do
+    local base
+    base="$(basename "$file")"
+    if [[ "$base" == "SKILL.md" ]]; then
+      cp "$file" "$dest_dir/skill.md"
+    else
+      cp "$file" "$dest_dir/$base"
+    fi
+  done
+}
+
+mkdir -p "$DEST"
+
+if [[ -d "$SUPERPOWERS_DIR/skills" ]]; then
+  echo "[oc-sync-claude-skills] syncing superpowers from $SUPERPOWERS_DIR/skills"
+  find "$SUPERPOWERS_DIR/skills" -maxdepth 1 -mindepth 1 -type d | while read -r dir; do
+    name="$(basename "$dir")"
+    rm -rf "$DEST/$name"
+    copy_skill_dir "$dir" "$DEST/$name"
+  done
+else
+  echo "[oc-sync-claude-skills] superpowers checkout missing: $SUPERPOWERS_DIR"
+  exit 1
+fi
+
+echo "[oc-sync-claude-skills] syncing ai-office local skills"
+find "$ROOT/skills" -maxdepth 1 -mindepth 1 -type d | while read -r dir; do
+  name="$(basename "$dir")"
+  [[ "$name" == "references" ]] && continue
+  rm -rf "$DEST/$name"
+  copy_skill_dir "$dir" "$DEST/$name"
+done
+
+if [[ -d "$ROOT/skills/references" ]]; then
+  rm -rf "$DEST/references"
+  mkdir -p "$DEST/references"
+  find "$ROOT/skills/references" -maxdepth 1 -type f | while read -r file; do
+    cp "$file" "$DEST/references/$(basename "$file")"
+  done
+fi
+
+echo "[oc-sync-claude-skills] synced skills into $DEST"
+find "$DEST" -maxdepth 1 -mindepth 1 -type d | sort

@@ -1,0 +1,6 @@
+{
+  "doc_url": "https://docs.example/specs/42",
+  "item_id": "pvti_42",
+  "summary": "Spec is ready for review and approval before branch creation.",
+  "title": "Control-plane rollout spec"
+}

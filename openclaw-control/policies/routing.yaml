@@ -1,0 +1,22 @@
+version: 1
+
+routes:
+  alerts:
+    channel_env: TELEGRAM_ALERTS_CHAT_ID
+    severities:
+      - critical
+      - high
+      - medium
+  specs:
+    channel_env: TELEGRAM_SPECS_CHAT_ID
+    events:
+      - sdlc.spec.ready
+  prs:
+    channel_env: TELEGRAM_PRS_CHAT_ID
+    events:
+      - sdlc.pr.ready
+      - sdlc.ci.passed
+  research:
+    channel_env: TELEGRAM_RESEARCH_CHAT_ID
+    events:
+      - research.digest.ready

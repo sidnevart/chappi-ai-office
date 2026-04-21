@@ -1,0 +1,16 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "item_id": { "type": "string" },
+    "job_id": { "type": "string" },
+    "project_key": { "type": "string" },
+    "repository": { "type": "string" },
+    "run_id": { "type": "string" },
+    "session_key": { "pattern": "^sdlc:", "type": "string" },
+    "status": { "type": "string" },
+    "title": { "type": "string" }
+  },
+  "required": ["item_id", "project_key"],
+  "title": "github_project_item_v1",
+  "type": "object"
+}

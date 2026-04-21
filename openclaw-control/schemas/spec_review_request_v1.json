@@ -1,0 +1,15 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "approval_id": { "type": "string" },
+    "doc_url": { "type": "string" },
+    "item_id": { "type": "string" },
+    "session_key": { "pattern": "^approval:", "type": "string" },
+    "spec_id": { "type": "string" },
+    "summary": { "type": "string" },
+    "title": { "type": "string" }
+  },
+  "required": ["item_id", "title", "doc_url"],
+  "title": "spec_review_request_v1",
+  "type": "object"
+}

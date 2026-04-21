@@ -1,0 +1,10 @@
+{
+  "active_job_id": "ai-office-pvti_42",
+  "agent_id": "sdlc-orchestrator",
+  "current_tool_activity_id": "tool-42",
+  "heartbeat_at": "2026-04-21T10:00:00Z",
+  "role": "sdlc-orchestrator",
+  "session_key": "sdlc:ai-office:pvti_42",
+  "state": "running",
+  "zone": "workflow"
+}

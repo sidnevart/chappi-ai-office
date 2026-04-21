@@ -1,0 +1,19 @@
+{
+  "additionalProperties": true,
+  "properties": {
+    "correlation_id": { "type": "string" },
+    "dedupe_key": { "type": "string" },
+    "delivery_status": { "enum": ["dry_run", "sent", "failed", "blocked", "suppressed"] },
+    "event_type": { "type": "string" },
+    "next_action": { "type": "string" },
+    "reason": { "type": "string" },
+    "run_id": { "type": "string" },
+    "severity": { "enum": ["critical", "high", "medium", "low"] },
+    "summary": { "type": "string" },
+    "system": { "type": "string" },
+    "timestamp": { "format": "date-time", "type": "string" }
+  },
+  "required": ["delivery_status", "event_type", "run_id", "severity", "summary", "system", "timestamp"],
+  "title": "alert_event_v1",
+  "type": "object"
+}
