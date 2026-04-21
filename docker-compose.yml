@@ -25,6 +25,7 @@ services:
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: "false"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     networks:
       - default
       - monitoring
@@ -76,15 +77,20 @@ services:
       - /var/log/journal:/var/log/journal:ro
       - /run/log/journal:/run/log/journal:ro
       - /etc/machine-id:/etc/machine-id:ro
-    command: -config.file=/etc/promtail/promtail.yml
+      - /tmp/openclaw:/tmp/openclaw:ro
+      - /opt/ai-office/openclaw-control/.runtime/events:/opt/ai-office/openclaw-control/.runtime/events:ro
+      - promtail-data:/tmp/promtail
+    command: -config.file=/etc/promtail/promtail.yml -positions.file=/tmp/promtail/positions.yaml
     networks:
       - monitoring
 
 volumes:
   pgdata:
+    name: ${POSTGRES_VOLUME_NAME:-repo_pgdata}
   grafana-data:
   prometheus-data:
   loki-data:
+  promtail-data:
 
 networks:
   monitoring:

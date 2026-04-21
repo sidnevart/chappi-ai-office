@@ -63,4 +63,5 @@ class ReadOnlyHandler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     print(f"Serving {ROOT} on port {PORT}")
     print(f"Auth token: {'set' if TOKEN else 'NONE (open!)'}")
-    HTTPServer(("127.0.0.1", PORT), ReadOnlyHandler).serve_forever()
+    HTTPServer(("0.0.0.0", PORT), ReadOnlyHandler).serve_forever()
+

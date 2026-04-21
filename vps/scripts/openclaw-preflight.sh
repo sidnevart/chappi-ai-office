@@ -8,11 +8,42 @@ log() {
 }
 
 if [[ -f "$CONFIG" ]]; then
-  # OpenClaw 2026.2.x rejects this old key. Remove it idempotently if it reappears.
-  if node -e "const fs=require('fs'); const p=process.argv[1]; const cfg=JSON.parse(fs.readFileSync(p,'utf8')); process.exit(cfg.gateway && Object.prototype.hasOwnProperty.call(cfg.gateway,'url') ? 0 : 1)" "$CONFIG"; then
+  # OpenClaw 2026.2.x rejects these old keys. Remove them idempotently if they reappear.
+  # Also strip deprecated agents.list[].description and agents.list[].heartbeat booleans.
+  if node -e "
+const fs=require('fs');
+const p=process.argv[1];
+const cfg=JSON.parse(fs.readFileSync(p,'utf8'));
+let needsFix=false;
+if (cfg.gateway && Object.prototype.hasOwnProperty.call(cfg.gateway,'url')) needsFix=true;
+if (cfg.agents?.defaults?.subagents && Object.prototype.hasOwnProperty.call(cfg.agents.defaults.subagents,'enabled')) needsFix=true;
+if (Array.isArray(cfg.agents?.list)) {
+  for (const a of cfg.agents.list) {
+    if (Object.prototype.hasOwnProperty.call(a,'description')) needsFix=true;
+    if (Object.prototype.hasOwnProperty.call(a,'heartbeat')) needsFix=true;
+  }
+}
+process.exit(needsFix ? 0 : 1);
+" "$CONFIG"; then
     cp "$CONFIG" "$CONFIG.bak-$(date +%Y%m%d-%H%M%S)"
-    node -e "const fs=require('fs'); const p=process.argv[1]; const cfg=JSON.parse(fs.readFileSync(p,'utf8')); delete cfg.gateway.url; fs.writeFileSync(p, JSON.stringify(cfg,null,2)+'\n')" "$CONFIG"
-    log "removed stale gateway.url"
+    node -e "
+const fs=require('fs');
+const p=process.argv[1];
+const cfg=JSON.parse(fs.readFileSync(p,'utf8'));
+if (cfg.gateway) delete cfg.gateway.url;
+if (cfg.agents?.defaults?.subagents) {
+  delete cfg.agents.defaults.subagents.enabled;
+  if (Object.keys(cfg.agents.defaults.subagents).length===0) delete cfg.agents.defaults.subagents;
+}
+if (Array.isArray(cfg.agents?.list)) {
+  for (const a of cfg.agents.list) {
+    delete a.description;
+    delete a.heartbeat;
+  }
+}
+fs.writeFileSync(p, JSON.stringify(cfg,null,2)+'\n');
+" "$CONFIG"
+    log "removed stale OpenClaw config keys"
   fi
 fi
 

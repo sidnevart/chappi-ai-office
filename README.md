@@ -17,7 +17,7 @@
 
 - VPS Ubuntu 22.04, 4+ ГБ RAM (рекомендуется 8+ ГБ для Ollama)
 - Telegram-бот (создаётся у @BotFather)
-- Аккаунт Ollama (для cloud-моделей glm-5, kimi-k2.5)
+- Аккаунт Ollama (для cloud-моделей glm-5, kimi-k2.6)
 
 ### Установка
 
@@ -47,7 +47,7 @@ openclaw channels add telegram --token $OPENCLAW_TG_BOT
 ## Архитектура
 
 ```
-Telegram ←→ OpenClaw (VPS :18789) ←→ Ollama (qwen3/glm-5/kimi-k2.5)
+Telegram ←→ OpenClaw (VPS :18789) ←→ Ollama (qwen3/glm-5/kimi-k2.6)
                 ↓
          PostgreSQL + MemPalace (база знаний)
                 ↓

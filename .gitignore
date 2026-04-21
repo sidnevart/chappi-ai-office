@@ -41,3 +41,5 @@ npm-debug.log*
 
 # Codex (локальная конфигурация, не для публикации)
 .codex/
+openclaw-control/.runtime/
+openclaw-control/.rendered/

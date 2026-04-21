@@ -68,9 +68,10 @@ docker exec -i ai-office-postgres psql -U postgres -d "${POSTGRES_DB:-ai_office}
 
 # ── Grafana ───────────────────────────────────────────────────────────────────
 echo ""
-echo "📊 Grafana..."
+echo "📊 Monitoring stack..."
 cd "$REPO_DIR"
-docker compose up -d grafana 2>/dev/null || docker-compose up -d grafana
+docker compose up -d grafana prometheus node-exporter loki promtail 2>/dev/null || \
+  docker-compose up -d grafana prometheus node-exporter loki promtail
 
 # ── Ollama ────────────────────────────────────────────────────────────────────
 echo ""
@@ -142,7 +143,7 @@ echo "🧠 MemPalace..."
 echo ""
 echo "⚙️  Systemd службы..."
 SYSTEMD_SRC="$REPO_DIR/vps/systemd"
-for svc in openclaw openclaw-watchdog ai-office-postgres-firewall ai-office-ui ai-office-docs ai-office-new-ui litellm; do
+for svc in ai-office-docker openclaw openclaw-watchdog ai-office-postgres-firewall ai-office-ui ai-office-docs ai-office-new-ui litellm; do
   src_file="$SYSTEMD_SRC/${svc}.service"
   if [ -f "$src_file" ]; then
     cp "$src_file" /etc/systemd/system/
@@ -153,7 +154,7 @@ if [ -f "$SYSTEMD_SRC/openclaw-watchdog.timer" ]; then
 fi
 systemctl daemon-reload
 
-for svc in openclaw ai-office-ui ai-office-docs ai-office-new-ui; do
+for svc in ai-office-docker openclaw ai-office-ui ai-office-docs ai-office-new-ui; do
   systemctl enable --now "$svc" 2>/dev/null \
     && echo "   ✅ $svc" \
     || echo "   ⚠️  $svc: проверь journalctl -u $svc"
@@ -192,7 +193,7 @@ echo "   Документация:    http://${VPS_IP}:5000"
 echo ""
 echo "⚠️  Следующие шаги:"
 echo "   1. ollama signin"
-echo "      (для glm-5:cloud, kimi-k2.5:cloud)"
+echo "      (для glm-5:cloud, kimi-k2.6:cloud)"
 echo "   2. openclaw channels add telegram \\"
 echo "      --token \$OPENCLAW_TG_BOT"
 echo "   3. Проверь: systemctl status openclaw"

@@ -1,5 +1,5 @@
 [Unit]
-Description=AI Office Docker Compose Stack
+Description=AI Office Monitoring Docker Compose Stack
 After=docker.service network-online.target
 Requires=docker.service
 
@@ -7,8 +7,9 @@ Requires=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/opt/ai-office/repo
-ExecStart=/usr/bin/docker compose up -d
-ExecStop=/usr/bin/docker compose stop
+ExecStartPre=/usr/bin/docker compose config -q
+ExecStart=/usr/bin/docker compose up -d grafana prometheus node-exporter loki promtail
+ExecStop=/usr/bin/docker compose stop grafana prometheus node-exporter loki promtail
 TimeoutStartSec=120
 
 [Install]

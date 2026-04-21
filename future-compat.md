@@ -1,29 +1,23 @@
 # Future Compatibility Notes
 
-## Claude Code CLI → Ollama Backend
+## Claude Code CLI → Non-Claude Backend
 
-Claude Code CLI uses the Anthropic SDK. To redirect it to a local/custom backend:
+Claude Code CLI uses the Anthropic SDK. The production-safe default is to run it against Anthropic directly.
+
+If you want `Claude Code` to drive non-Claude models such as `kimi-*` or `glm-*`, you must place an Anthropic-compatible bridge in front of that model backend:
 
 ```bash
-# Point Claude Code at Ollama's OpenAI-compatible endpoint
-export ANTHROPIC_BASE_URL=http://localhost:11434/v1
-export ANTHROPIC_API_KEY=ollama   # dummy key, ollama ignores it
-
-# Or set in ~/.claude/settings.json:
-# "env": { "ANTHROPIC_BASE_URL": "http://localhost:11434/v1" }
+export CONTROL_CLAUDE_MODEL=kimi-k2.6:cloud
+export CONTROL_CLAUDE_BASE_URL=http://<bridge-host>:<port>
+export CONTROL_CLAUDE_API_KEY=<bridge-token>
 ```
 
-**Caveat:** Claude Code expects Claude-specific response formats (tool_use, thinking blocks).
-Ollama models respond in OpenAI format. Full compatibility requires a proxy layer.
+**Caveat:** raw Ollama/OpenAI endpoints are not enough. Claude Code expects Anthropic-compatible response semantics, including tool-use behavior.
 
-**Recommended proxy:** `litellm` — translates between Anthropic and OpenAI formats:
-```bash
-pip install litellm
-litellm --model ollama/glm-5:cloud --port 8082 --drop_params
-export ANTHROPIC_BASE_URL=http://localhost:8082
-```
+Current OpenClaw runner policy:
 
-Docs: https://docs.litellm.ai/docs/proxy/quick_start
+- no custom model configured: use native Claude backend
+- custom non-Claude model configured: require explicit bridge vars or fail preflight
 
 ---
 
@@ -46,7 +40,7 @@ Docs: https://github.com/openai/codex
 
 | Tool | Best for | Model |
 |------|---------|-------|
-| Claude Code CLI | Complex multi-file coding, planning | Needs Claude-format proxy |
+| Claude Code CLI | Complex multi-file coding, planning | Native Claude by default; custom models need Claude-format bridge |
 | Codex CLI | Single-shot code gen, scripts | Direct ollama compat |
 | OpenClaw agent | Telegram interactions, research, automation | glm-5:cloud / minimax-m2:cloud |
 

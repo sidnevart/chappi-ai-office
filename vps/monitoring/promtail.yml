@@ -25,7 +25,7 @@ scrape_configs:
                   _unit: ''
             - template:
                 source: level
-                template: '{{ if ._level }}{{ toLower ._level }}{{ else }}info{{ end }}'
+                template: '{{ if ._level }}{{ ToLower ._level }}{{ else }}info{{ end }}'
             - labels:
                 level:
       # Fallback: detect level from plain text
@@ -41,3 +41,42 @@ scrape_configs:
         target_label: unit
       - source_labels: ['__journal_priority_keyword']
         target_label: priority
+
+  - job_name: openclaw
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: openclaw
+          __path__: /tmp/openclaw/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: '_meta.logLevelName'
+            timestamp: 'time'
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+      - template:
+          source: level
+          template: '{{ if .level }}{{ ToLower .level }}{{ else }}info{{ end }}'
+      - labels:
+          level:
+
+  - job_name: ai-office
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: ai-office
+          __path__: /opt/ai-office/openclaw-control/.runtime/events/*.jsonl
+    pipeline_stages:
+      - json:
+          expressions:
+            level: 'event_type'
+            timestamp: 'timestamp'
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+      - labels:
+          level:
