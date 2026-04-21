@@ -46,7 +46,7 @@ $BINARY config set telegram.token "$OPENCLAW_TG_BOT" 2>/dev/null || \
 Map to three tiers before applying:
 - `light`  = `qwen3.5:cloud`   — fast tasks, summaries, routing decisions
 - `medium` = `glm-5:cloud`     — analysis, code drafts, structured tasks
-- `heavy`  = `kimi-k2.5:cloud` — complex research, long-context coding
+- `heavy`  = `kimi-k2.6:cloud` — complex research, long-context coding
 
 Show diff before applying any config change.
 

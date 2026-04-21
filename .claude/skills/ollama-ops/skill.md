@@ -2,7 +2,7 @@
 name: ollama-ops
 description: >-
   Ollama model management for AI Office. Use when checking ollama status,
-  signin state, pulling cloud models (qwen3.5:cloud, glm-5:cloud, kimi-k2.5:cloud),
+  signin state, pulling cloud models (qwen3.5:cloud, glm-5:cloud, kimi-k2.6:cloud),
   testing model tiers, troubleshooting ollama connectivity or API.
   Trigger phrases: "ollama", "pull model", "cloud models", "тир моделей",
   "протестируй модели", "ollama не запущен". 
@@ -27,7 +27,7 @@ If not signed in: cloud models will fail. Ask user to run `! ollama signin` in t
 
 ## 3. Pull Cloud Models (idempotent)
 ```bash
-for model in "qwen3.5:cloud" "glm-5:cloud" "kimi-k2.5:cloud"; do
+for model in "qwen3.5:cloud" "glm-5:cloud" "kimi-k2.6:cloud"; do
   if ollama list 2>/dev/null | grep -q "$model"; then
     echo "✅ $model already available"
   else
@@ -45,8 +45,8 @@ ollama run qwen3.5:cloud "Reply with exactly: OK-LIGHT" --nowordwrap 2>&1 | tail
 echo "=== Testing Medium Tier (glm-5:cloud) ==="
 ollama run glm-5:cloud "Reply with exactly: OK-MEDIUM" --nowordwrap 2>&1 | tail -3
 
-echo "=== Testing Heavy Tier (kimi-k2.5:cloud) ==="
-ollama run kimi-k2.5:cloud "Reply with exactly: OK-HEAVY" --nowordwrap 2>&1 | tail -3
+echo "=== Testing Heavy Tier (kimi-k2.6:cloud) ==="
+ollama run kimi-k2.6:cloud "Reply with exactly: OK-HEAVY" --nowordwrap 2>&1 | tail -3
 ```
 
 ## 5. Troubleshooting
@@ -62,4 +62,4 @@ After checks, report:
 |-------|--------|------|
 | qwen3.5:cloud | ✅/❌ | light |
 | glm-5:cloud | ✅/❌ | medium |
-| kimi-k2.5:cloud | ✅/❌ | heavy |
+| kimi-k2.6:cloud | ✅/❌ | heavy |

@@ -3,7 +3,7 @@ name: model-router
 description: >-
   Model routing policy for AI Office. Use when deciding which model tier to
   assign to a task or subagent: light (qwen3.5:cloud), medium (glm-5:cloud),
-  heavy (kimi-k2.5:cloud). Called internally before spawning research-agent,
+  heavy (kimi-k2.6:cloud). Called internally before spawning research-agent,
   kb-agent, or infra-agent to pick the right model. Also useful when user asks
   "какую модель использовать для X". Returns tier + model + one-line reason.
   Do NOT use for: actually invoking models (that's done via ollama run),
@@ -20,7 +20,7 @@ model: haiku
 |--------|----------------|------|--------|---------|
 | light  | qwen3.5:cloud  | Low  | Fast   | Short   |
 | medium | glm-5:cloud    | Med  | Medium | Medium  |
-| heavy  | kimi-k2.5:cloud| High | Slow   | Long    |
+| heavy  | kimi-k2.6:cloud| High | Slow   | Long    |
 
 ## Routing Rules (apply in order)
 
@@ -59,5 +59,5 @@ Always return exactly:
 
 ## Examples
 - "Summarize this note" → `{ "tier": "light", "model": "qwen3.5:cloud", "reason": "short summary task" }`
-- "Research AI office tools" → `{ "tier": "heavy", "model": "kimi-k2.5:cloud", "reason": "multi-source web research" }`
+- "Research AI office tools" → `{ "tier": "heavy", "model": "kimi-k2.6:cloud", "reason": "multi-source web research" }`
 - "Generate ingest script" → `{ "tier": "medium", "model": "glm-5:cloud", "reason": "code generation, medium complexity" }`
