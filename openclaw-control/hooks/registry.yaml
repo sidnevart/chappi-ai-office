@@ -28,3 +28,12 @@ hooks:
     approval_class: automatic
     input_schema: alert_event_input_v1
     delivery: telegram.alerts
+  - id: forum-topic-create
+    event: sdlc.forum_topic.create
+    owner: office-controller
+    handler: hooks/create-forum-topic.sh
+    timeout_seconds: 30
+    retry_policy: bounded
+    approval_class: automatic
+    input_schema: forum_topic_create_v1
+    delivery: telegram.specs

@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forum_topic_create_v1",
+  "title": "Forum Topic Create Event",
+  "description": "Schema for creating a Telegram forum topic in SDLC workflow",
+  "type": "object",
+  "required": ["chat_id", "topic_name"],
+  "properties": {
+    "chat_id": {
+      "type": ["string", "integer"],
+      "description": "Telegram chat ID (supergroup)"
+    },
+    "topic_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Name for the forum topic"
+    },
+    "icon_color": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 16777215,
+      "description": "RGB color for the topic icon (optional)"
+    },
+    "icon_custom_emoji_id": {
+      "type": "string",
+      "description": "Custom emoji ID for the topic icon (optional)"
+    },
+    "message": {
+      "type": "string",
+      "description": "Initial message to send to the topic (optional)"
+    },
+    "project_key": {
+      "type": "string",
+      "description": "Project key for SDLC tracking (optional)"
+    },
+    "item_id": {
+      "type": "string",
+      "description": "Item ID for SDLC tracking (optional)"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Run ID for tracking (optional)"
+    }
+  },
+  "additionalProperties": false
+}
