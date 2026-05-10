@@ -1,0 +1,13 @@
+name: OpenClaw Control Canary
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/openclaw-control-canary.yml"
+      - "ops/openclaw-control-github-canary-20260421.md"
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "openclaw control canary ok"
